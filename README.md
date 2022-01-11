@@ -22,7 +22,7 @@ You will need to create an OpenWeather account (free) and obtain an API key.
 
 This is slightly tricky because the PicoWireless docks onto a Pico with male header pins.
 
-When you solder on the male header to the Pico, **do not solder pins 5, 6, 7 and 8. When you have done, carefully push the unsoldered header pins up so that they rise up above the upper side of the Pico. Now solder the base of each pin to the Pico.
+When you solder on the male header to the Pico, **do not solder pins 5, 6, 7 and 8**. When you have done, carefully push the unsoldered header pins up so that they rise up above the upper side of the Pico. Now solder the base of each pin to the Pico.
 
 Solder the LED matrix to the backpack, and the backpack to the supplied male header as [described here]().
 
@@ -42,7 +42,7 @@ Now connect these pins using the DuPont wires:
 Connect the Pico to your computer. When the `CIRCUITPY` volume appears, copy across the following files and folders:
 
 * `code.py`
-* 'lib`
+* `lib`
 
 Create a file on the drive called `secrets` and add the following code to it, replacing the `...` with your values:
 
