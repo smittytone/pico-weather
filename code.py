@@ -1,119 +1,156 @@
-# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
-# SPDX-License-Identifier: MIT
-
-# adafruit_requests usage with an esp32spi_socket
+'''
+IMPORTS
+'''
+import time
 import board
 import busio
-import time
 from digitalio import DigitalInOut, Direction, Pull
 from analogio import AnalogOut
 from adafruit_esp32spi import adafruit_esp32spi
 from ht16k33matrix import HT16K33Matrix
 import adafruit_requests as requests
 import adafruit_esp32spi.adafruit_esp32spi_socket as socket
+import open_weather
 
-
-def set_led(r, g, b):
-    esp.set_analog_write(LED_R, 1 - r)
-    esp.set_analog_write(LED_B, 1 - b)
-    esp.set_analog_write(LED_G, 1 - g)
-
-# Add a secrets.py to your filesystem that has a dictionary called secrets with "ssid" and
-# "password" keys with your WiFi credentials. DO NOT share that file or commit it into Git or other
-# source control.
-# pylint: disable=no-name-in-module,wrong-import-order
+'''
+Add a `secrets.py` to your filesystem that has a dictionary called `secrets`
+with "ssid" and "password" keys for your WiFi credentials.
+DO NOT share that file or commit it into Git or other source control.
+'''
 try:
     from secrets import secrets
 except ImportError:
     print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
 
-# If you are using a board with pre-defined ESP32 Pins:
-esp32_cs = DigitalInOut(board.GP7)
-esp32_ready = DigitalInOut(board.GP10)
-esp32_reset = DigitalInOut(board.GP11)
-
-spi = busio.SPI(board.GP18, board.GP19, board.GP16)
-esp = adafruit_esp32spi.ESP_SPIcontrol(spi, esp32_cs, esp32_ready, esp32_reset)
-
+'''
+GLOBALS
+'''
 LED_R = 25
 LED_G = 26
 LED_B = 27
 
-set_led(0.5,0,0)
 
-BUTTON_A = DigitalInOut(board.GP12)
-BUTTON_A.direction = Direction.INPUT
-BUTTON_A.pull = Pull.UP
-
-print("Connecting to AP...")
-while not esp.is_connected:
-    try:
-        esp.connect_AP(secrets["ssid"], secrets["password"])
-    except RuntimeError as e:
-        print("Could not connect to AP, retrying: ", e)
-        continue
-print("Connected to", str(esp.ssid, "utf-8"), "\tRSSI:", esp.rssi)
-set_led(0,0.5,0)
+'''
+FUNCTIONS
+'''
+def setup_esp32():
+    esp32_cs = DigitalInOut(board.GP7)
+    esp32_ready = DigitalInOut(board.GP10)
+    esp32_reset = DigitalInOut(board.GP11)
+    esp32_spi = busio.SPI(board.GP18, board.GP19, board.GP16)
+    return adafruit_esp32spi.ESP_SPIcontrol(esp32_spi, esp32_cs, esp32_ready, esp32_reset)
 
 
-# Initialize a requests object with a socket and esp32spi interface
-socket.set_interface(esp)
-requests.set_socket(socket, esp)
+def setup_display():
+    i2c = busio.I2C(board.GP7, board.GP6)
+    while not i2c.try_lock(): pass
+    display = HT16K33Matrix(i2c)
+    display.set_brightness(2)
+    return display
 
-TEXT_URL = "http://wifitest.adafruit.com/testwifi/index.html"
-JSON_GET_URL = "https://agent.electricimp.com/k1PYg-Rrw88i/current" #"https://httpbin.org/get"
-JSON_POST_URL = "https://httpbin.org/post"
 
-keys = ["mc", "ssid", "nm", "gw", "ip", "wip"]
-key_titles = ["MAC", "SSID", "Netmask", "Gateway", "LAN IP", "WAN IP"]
-key_index = 0
+def setup_button_a():
+    button = DigitalInOut(board.GP12)
+    button.direction = Direction.INPUT
+    button.pull = Pull.UP
+    return button
 
-assert(len(keys) == len(key_titles))
 
+def do_connect(e, s, p):
+    set_led(e, 0.5, 0.3, 0)
+    while not e.is_connected:
+        try:
+            e.connect_AP(s, p)
+        except RuntimeError as e:
+            print("Could not connect to AP, retrying: ", e)
+            continue
+    print("Connected to", str(e.ssid, "utf-8"), "\tRSSI:", e.rssi)
+    set_led(0, 0.5, 0)
+
+
+
+
+def set_led(e, r, g, b):
+    e.set_analog_write(LED_R, 1 - r)
+    e.set_analog_write(LED_B, 1 - b)
+    e.set_analog_write(LED_G, 1 - g)
+
+
+'''
+RUNTIME START
+'''
+# Set up the ESP32
+esp32 = setup_esp32()
+set_led(esp32, 0.5, 0, 0)
+
+# Set up the display
+matrix = setup_display()
+
+# Initialize a requests object with a socket and an esp32spi interface
+socket.set_interface(esp32)
+requests.set_socket(socket, esp32)
+
+# Set up Open Weather
+open_weather_call_count = 0
+weather_data = {}
+open_weather = OpenWeather(requests, secrets)
+
+# Primary loop
 while True:
-    '''
-    print("Fetching text from %s" % TEXT_URL)
-    response = requests.get(TEXT_URL)
-    print("-" * 40)
+    if not esp32.is_connected:
+        do_connect(esp32, secrets["ssid"], secrets["password"])
 
-    print("Text Response: ", response.text)
-    print("-" * 40)
-    response.close()
-    '''
-    print("Fetching JSON data from %s" % JSON_GET_URL)
-    response = requests.get(JSON_GET_URL)
+    data = open_weather.request_forecast()
+    if "hourly" in data:
+        # Get second item in array: this is the weather one hour from now
+        item = data.hourly[1]
+        wid = 0
+        if "weather" in item and len(item["weather"]) > 0:
+            weather_data["cast"] = item["weather"][0]["main"]
+            wid = item["weather"][0]["id"]
+        else:
+            weather_data["cast"] = "None"
 
-    print(key_titles[key_index], "->", response.json()[keys[key_index]])
-    response.close()
+        # Adjust troublesome icon names
+        if wid == 771: weather_data["cast"] = "Windy"
+        if wid == 871: weather_data["cast"] = "Tornado"
+        if wid > 699 and wid < 770: weather_data["cast"] = "Foggy"
+        weather_data["icon"] = weather_data["cast"].lower()
 
-    '''
-    data = "31F"
-    print("POSTing data to {0}: {1}".format(JSON_POST_URL, data))
-    response = requests.post(JSON_POST_URL, data=data)
-    print("-" * 40)
+        if weather_data["cast"] == "Clouds":
+            if wid < 804:
+                weather_data["icon"] = "partlycloudy"
+                weather_data["cast"] = "Partly cloudy"
+            else:
+                weather_data["icon"] = "cloudy"
+                weather_data["cast"] = "Cloudy"
 
-    json_resp = response.json()
-    # Parse out the 'data' key from json_resp dict.
-    print("Data received from server:", json_resp["data"])
-    print("-" * 40)
-    response.close()
+        if wid > 602 and wid < 620:
+            weather_data["icon"] = "sleet"
+            weather_data["cast"] = "Sleet"
 
-    json_data = {"Date": "July 25, 2019"}
-    print("POSTing data to {0}: {1}".format(JSON_POST_URL, json_data))
-    response = requests.post(JSON_POST_URL, json=json_data)
-    print("-" * 40)
+        if weather_data["cast"] == "Drizzle":
+            weather_data["cast"] = "lightrain"
 
-    json_resp = response.json()
-    # Parse out the 'json' key from json_resp dict.
-    print("JSON Data received from server:", json_resp["json"])
-    print("-" * 40)
-    response.close()
-    '''
+        if weather_data["cast"] == "Clear":
+            # Set clear icon by time of day
+            parts = item.weather[0].icon.split(".")
+            diurnal = parts[0][:len(parts[0]) - 1]
+            if diurnal == "d":
+                weather_data["icon"] += "day"
+                weather_data["cast"] += " day"
+            else:
+                weather_data["icon"] += "night"
+                weather_data["cast"] += " night"
 
-    while True:
-        if BUTTON_A.value == False:
-            key_index += 1
-            if key_index >= len(keys): key_index = 0
-            break
-        time.sleep(0.01)
+        # Send the icon name to the device
+        weather_data["temp"] = item["feels_like"]
+
+        # Update the tally, or zero on a new day
+        open_weather_call_count += 1
+        now = date()
+        if now.day != last_check.day: open_weather_call_count = 0
+        lastCheck = now
+
+    time.sleep(60 * 5)
