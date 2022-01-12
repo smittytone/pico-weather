@@ -3,7 +3,8 @@ IMPORTS
 '''
 import board
 import busio
-from time import monotonic_ns, sleep
+import rtc
+from time import monotonic_ns, sleep, localtime
 from digitalio import DigitalInOut, Direction, Pull
 from analogio import AnalogOut
 from adafruit_esp32spi import adafruit_esp32spi
@@ -169,6 +170,38 @@ def setup_icons(matrix):
     iconset["none"] = 12
 
 
+def get_time(timeout=10):
+    # https://github.com/micropython/micropython/blob/master/ports/esp8266/modules/ntptime.py
+    # Modify the standard code to extend the timeout, and catch OSErrors triggered when the
+    # socket operation times out
+    ntp_query = bytearray(48)
+    ntp_query[0] = 0x1b
+    address = socket.getaddrinfo("pool.ntp.org", 123)[0][-1]
+    # Create DGRAM UDP socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.settimeout(timeout)
+    return_value = None
+    try:
+        _ = sock.sendto(ntp_query, address)
+        msg = sock.recv(48)
+        val = struct.unpack("!I", msg[40:44])[0]
+        return_value = val - 3155673600
+    except:
+        pass
+    sock.close()
+    return return_value
+
+
+def set_rtc(timeout=10):
+    now_time = get_time(timeout)
+    if now_time is not None:
+        time_data = localtime(now_time)
+        time_data = time_data[0:3] + (0,) + time_data[3:6] + (0,)
+        RTC().datetime(time_data)
+        return True
+    return False
+
+
 '''
 RUNTIME START
 '''
@@ -200,6 +233,7 @@ do_show = True
 while True:
     if not esp32.is_connected:
         do_connect(esp32, secrets["ssid"], secrets["password"])
+        get_time()
 
     # Check the clock
     now = monotonic_ns()
