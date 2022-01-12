@@ -8,9 +8,10 @@ from digitalio import DigitalInOut, Direction, Pull
 from analogio import AnalogOut
 from adafruit_esp32spi import adafruit_esp32spi
 from ht16k33matrix import HT16K33Matrix
+from openweather import OpenWeather
 import adafruit_requests as requests
 import adafruit_esp32spi.adafruit_esp32spi_socket as socket
-import open_weather
+
 
 '''
 Add a `secrets.py` to your filesystem that has a dictionary called `secrets`
@@ -30,6 +31,8 @@ GLOBALS
 LED_R = 25
 LED_G = 26
 LED_B = 27
+I2C_SDA = board.GP4
+I2C_SCL = board.GP5
 
 saved_data = None
 iconset = {}
@@ -49,15 +52,17 @@ def setup_esp32():
 
 def setup_display():
     # Power the matrix on GPIO 3
-    pwr = DigitalInOut(board.GP3)
-    pwr.direction = Direction.OUTPUT
-    pwr.value = True
+    pwr_pin = DigitalInOut(board.GP3)
+    pwr_pin.direction = Direction.OUTPUT
+    pwr_pin.value = True
 
     # Set up the I2C bus on GPIO 4, GPIO 5
-    i2c = busio.I2C(board.GP4, board.GP5)
+    i2c = busio.I2C(I2C_SCL, I2C_SDA)
     while not i2c.try_lock(): pass
     display = HT16K33Matrix(i2c)
     display.set_brightness(2)
+    display.set_angle(2)
+    display.clear()
     return display
 
 
@@ -77,7 +82,7 @@ def do_connect(e, s, p):
             if debug: print("Could not connect to AP, retrying: ", e)
             continue
     if debug: print("Connected to", str(e.ssid, "utf-8"), "\tRSSI:", e.rssi)
-    set_led(0, 0.5, 0)
+    set_led(e, 0, 0.5, 0)
 
 
 def set_led(e, r, g, b):
@@ -94,6 +99,8 @@ def display_weather(matrix, display_data=None):
     current forecast again, and the current forecast will continue to be shown
     if the device goes offline for any period
     """
+    global saved_data
+
     # Bail if we have no data passed in
     if not display_data:
         if not saved_data:
@@ -105,14 +112,14 @@ def display_weather(matrix, display_data=None):
     ds = "    " + display_data["cast"][0:1].upper() + display_data["cast"][1:] + "  "
 
     # ...then add the forecast temperature...
-    ds += (format("Out: %.1f", display_data["temp"]) + "\x7F" + "c")
+    ds += ("Out: {:.1f}".format(display_data["temp"]) + "\x7F" + "c")
 
     # Prepare an icon to display
     try:
         icon = iconset[display_data["icon"]]
     except:
         icon = iconset["none"]
-
+    print(icon)
     # Store the current icon and forecast string
     # (we will need to re-use it if the 'refresh display' timer fires, or
     # the device goes offline and receives no new forecasts)
@@ -120,30 +127,30 @@ def display_weather(matrix, display_data=None):
 
     # Display the forecast if we should display it
     matrix.clear()
-    matrix.scroll_text(ds + "    ")
+    matrix.scroll_text(ds + "    ", 0.08)
 
     # Pause for half a second
     sleep(0.5)
 
     # Display the weather icon
-    matrix.display_character(icon)
+    matrix.set_character(icon).draw()
 
 
 def setup_icons(matrix):
     # Set up weather icons using user-definable characters
-    matrix.define_character(0, b"\x91\x42\x18\x3d\xbc\x18\x42\x89")
-    matrix.define_character(1, b"\x31\x7A\x78\xFA\xFC\xF9\x7A\x30")
-    matrix.define_character(2, b"\x31\x7A\x78\xFA\xFC\xF9\x7A\x30")
-    matrix.define_character(3, b"\x28\x92\x54\x38\x38\x54\x92\x28")
-    matrix.define_character(4, b"\x32\x7D\x7A\xFD\xFA\xFD\x7A\x35")
-    matrix.define_character(5, b"\x28\x28\x28\x28\x28\xAA\xAA\x44")
-    matrix.define_character(6, b"\xAA\x55\xAA\x55\xAA\x55\xAA\x55")
-    matrix.define_character(7, b"\x30\x78\x78\xF8\xF8\xF8\x78\x30")
-    matrix.define_character(8, b"\x30\x48\x48\x88\x88\x88\x48\x30")
-    matrix.define_character(9, b"\x00\x00\x00\x0F\x38\xE0\x00\x00")
-    matrix.define_character(10, b"\x00\x40\x6C\xBE\xBB\xB1\x60\x40")
-    matrix.define_character(11, b"\x3C\x42\x81\xC3\xFF\xFF\x7E\x3C")
-    matrix.define_character(12, b"\x00\x00\x40\x9D\x90\x60\x00\x00")
+    matrix.define_character(b"\x91\x42\x18\x3d\xbc\x18\x42\x89", 0)
+    matrix.define_character(b"\x31\x7A\x78\xFA\xFC\xF9\x7A\x30", 1)
+    matrix.define_character(b"\x31\x7A\x78\xFA\xFC\xF9\x7A\x30", 2)
+    matrix.define_character(b"\x28\x92\x54\x38\x38\x54\x92\x28", 3)
+    matrix.define_character(b"\x32\x7D\x7A\xFD\xFA\xFD\x7A\x35", 4)
+    matrix.define_character(b"\x28\x28\x28\x28\x28\xAA\xAA\x44", 5)
+    matrix.define_character(b"\xAA\x55\xAA\x55\xAA\x55\xAA\x55", 6)
+    matrix.define_character(b"\x30\x78\x78\xF8\xF8\xF8\x78\x30", 7)
+    matrix.define_character(b"\x30\x48\x48\x88\x88\x88\x48\x30", 8)
+    matrix.define_character(b"\x00\x00\x00\x0F\x38\xE0\x00\x00", 9)
+    matrix.define_character(b"\x00\x40\x6C\xBE\xBB\xB1\x60\x40", 10)
+    matrix.define_character(b"\x3C\x42\x81\xC3\xFF\xFF\x7E\x3C", 11)
+    matrix.define_character(b"\x00\x00\x40\x9D\x90\x60\x00\x00", 12)
 
     # Set up a table to map incoming weather condition names
     # (eg. "clearday") to user-definable character Ascii values
@@ -180,9 +187,14 @@ requests.set_socket(socket, esp32)
 # Set up Open Weather
 open_weather_call_count = 0
 weather_data = {}
-open_weather = OpenWeather(requests, secrets)
+# Test data
+weather_data["icon"] = "rain"
+weather_data["cast"] = "rain"
+weather_data["temp"] = 11.5
 
-do_show = False
+open_weather = OpenWeather(requests, secrets["apikey"], True)
+
+do_show = True
 
 # Primary loop
 while True:
@@ -191,14 +203,14 @@ while True:
 
     # Check the clock
     now = monotonic_ns()
-    if now % 900000000000 == 0:
+    if now % 900000000000 == 0 or do_show:
         # Get a forecast every 15 mins
         forecast = open_weather.request_forecast(secrets["lat"], secrets["lng"])
-        weather_data = None
-
-        if "hourly" in forecast:
+        if "err" in forecast and debug:
+            print(forecast["err"])
+        elif "data" in forecast and "hourly" in forecast["data"]:
             # Get second item in array: this is the weather one hour from now
-            item = forecast["hourly"][1]
+            item = forecast["data"]["hourly"][0]
             wid = 0
             if "weather" in item and len(item["weather"]) > 0:
                 weather_data["cast"] = item["weather"][0]["main"]
@@ -229,7 +241,7 @@ while True:
 
             if weather_data["cast"] == "Clear":
                 # Set clear icon by time of day
-                parts = item.weather[0].icon.split(".")
+                parts = item["weather"][0]["icon"].split(".")
                 diurnal = parts[0][:len(parts[0]) - 1]
                 if diurnal == "d":
                     weather_data["icon"] += "day"
@@ -245,6 +257,7 @@ while True:
             open_weather_call_count += 1
             do_show = True
 
-    if now % 120000000000 or do_show:
+    if now % 15000000000 == 0 or do_show:
         # Update the display every 2 mins, or on a new forecast
         display_weather(matrix, weather_data)
+        do_show = False
