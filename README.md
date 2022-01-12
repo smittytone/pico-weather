@@ -46,11 +46,12 @@ Connect the Pico to your computer. When the `CIRCUITPY` volume appears, copy acr
 
 Create a file on the `CIRCUITPY` volume called `secrets.py` and add the following code to it, replacing the `...` with your own values:
 
-```json
-{ "ssid": "...", "password": "...", "apikey": "..." }
+```python
+secrets  = { "ssid": "...", "password": "...", "apikey": "...",
+             "lat": "...", "lng": "..." }
 ```
 
-`ssid` and `password` are your WiFi credentials; `apikey` is your OpenWeather API key.
+`ssid` and `password` are your WiFi credentials; `apikey` is your OpenWeather API key; `lat` and `lng` are your location’s co-ordinates as decimal fraction values.
 
 Do not save this file in your repo.
 

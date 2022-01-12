@@ -193,7 +193,7 @@ while True:
     now = monotonic_ns()
     if now % 900000000000 == 0:
         # Get a forecast every 15 mins
-        forecast = open_weather.request_forecast()
+        forecast = open_weather.request_forecast(secrets["lat"], secrets["lng"])
         weather_data = None
 
         if "hourly" in forecast:
