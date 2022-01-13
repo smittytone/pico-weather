@@ -1,4 +1,14 @@
 '''
+PicoWeather
+
+Version:        1.0.0
+Author:         Tony Smith (@smittytone)
+License:        MIT
+Copyright:      2022
+'''
+
+
+'''
 IMPORTS
 '''
 import board

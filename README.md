@@ -2,6 +2,8 @@
 
 A Raspberry Pi Pico-based weather readout using the Pimoroni PicoWireless.
 
+![A Raspberry Pi Pico-based weather readout](./images/P1020223.JPG)
+
 ## Requirements
 
 ### Hardware
@@ -28,8 +30,6 @@ When you solder on the male header to the Pico, **do not solder pins 5, 6, 7 and
 
 Solder the LED matrix to the backpack, and the backpack to the supplied male header as [described here](https://learn.adafruit.com/adafruit-led-backpack/1-2-8x8-matrix-assembly).
 
-Now fit the Pico into the PicoWireless’ female header, taking care to get the correct orientation: the Pico’s USB connector should be at the same end as the PicoWireless’ MicroSD slot and USB print.
-
 Now connect these pins using the DuPont wires:
 
 | Backpack pin | Pico Pin |
@@ -38,6 +38,12 @@ Now connect these pins using the DuPont wires:
 | SDA | 6 |
 | SCL | 7 |
 | GND | 8 |
+
+![Use the DuPont wires to connect the display](./images/P1020217.JPG)
+
+Now fit the Pico into the PicoWireless’ female header, taking care to get the correct orientation: the Pico’s USB connector should be at the same end as the PicoWireless’ MicroSD slot and USB print:
+
+![Use the DuPont wires to connect the display](./images/P1020219.JPG)
 
 ### Software
 
@@ -57,6 +63,14 @@ secrets  = { "ssid": "...", "password": "...", "apikey": "...",
 
 Do not save this file in your repo.
 
-## Licence
+## Licence and Copyright
 
-This repo’s source code is made available under the terms of the [MIT Licence](./LICENSE.md).
+For convenience, this repository includes software from Adafruit, specifically:
+
+* [adafruit_esp32spi](https://github.com/adafruit/Adafruit_CircuitPython_ESP32SPI)
+* [adafruit_bus_device](https://github.com/adafruit/Adafruit_CircuitPython_BusDevice)
+* [adafruit_requests](https://github.com/adafruit/Adafruit_CircuitPython_Requests/)
+
+These libraries’ source code files are copyright © 2019 ladyada for Adafruit Industries and are issued under the terms of the [MIT Licence](./LICENSE.md).
+
+All other source code is copyright © 2020, 2022 Tony Smith and is also made available under the terms of the [MIT Licence](./LICENSE.md).

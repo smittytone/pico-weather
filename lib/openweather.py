@@ -169,8 +169,8 @@ class OpenWeather:
                 # Have we valid JSON?
                 data = response.json()
                 data["statuscode"] = response.status_code
-            except e:
-                err = "Unable to decode data received from Open Weather: " + str(e)
+            except:
+                err = "Unable to decode data received from Open Weather"
 
         response.close()
 
