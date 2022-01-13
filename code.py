@@ -225,6 +225,7 @@ def app_intro(matrix):
         y += dy
         sleep(0.015)
 
+
 """
 This function clears the matrix pixels from the inside out, in a spiral pattern
 """
@@ -263,6 +264,35 @@ def app_outro(matrix):
         sleep(0.015)
 
 
+det show_startup(display):
+    display.clear().draw()
+    display.scroll_text("    PicoWeather 1.0.0    ", 0.08)
+    sleep(0.5)
+    app_intro(display)
+    app_outro(display)
+
+
+def set_time(e, timezone_offset=0):
+    try:
+        now = e.get_time()
+        now = localtime(now[0] + timezone_offset)
+        rtc.RTC().datetime = now
+    except ValueError as err:
+        print("[ERROR] Could not set RTC: " + str(err))
+        return False
+    return True
+
+
+'''
+Set some weather test data
+'''
+def get_test_data():
+    test_data["icon"] = "rain"
+    test_data["cast"] = "rain"
+    test_data["temp"] = 11.5
+    return test_data
+
+
 '''
 RUNTIME START
 '''
@@ -282,30 +312,19 @@ requests.set_socket(socket, esp32)
 open_weather_call_count = 0
 open_weather = OpenWeather(requests, secrets["apikey"], True)
 weather_data = {}
+# weather_data = get_test_date()
 do_show = True
 is_rtc_set = False
 last_check = localtime()
 
-"""
-# Test data
-weather_data["icon"] = "rain"
-weather_data["cast"] = "rain"
-weather_data["temp"] = 11.5
-"""
-
-"""
 # Display banner
-matrix.clear().draw()
-matrix.scroll_text("    PicoWeather 1.0.0    ", 0.08)
-sleep(0.5)
-app_intro(matrix)
-app_outro(matrix)
-"""
+# show_startup(matrix)
 
 # Primary loop
 while True:
     if not esp32.is_connected:
         do_connect(esp32, secrets["ssid"], secrets["password"])
+        is_rtc_set = set_time(esp32)
 
     # Check the clock
     ns_tick = monotonic_ns()
