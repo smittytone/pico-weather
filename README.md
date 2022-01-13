@@ -22,7 +22,9 @@ You will need to create an [OpenWeather account](https://openweathermap.org/appi
 
 This is slightly tricky because the PicoWireless docks onto a Pico with male header pins.
 
-When you solder on the male header to the Pico, **do not solder pins 5, 6, 7 and 8**. When you have done, carefully push the unsoldered header pins up so that they rise up above the upper side of the Pico. Now solder the base of each pin to the Pico.
+When you solder on the male header to the Pico, **do not solder pins 5, 6, 7 and 8**. When you have done, carefully push the unsoldered header pins up so that they rise up above the upper side of the Pico. Now solder the base of each pin to the Pico:
+
+![Push four pins up for the display](./images/P1020216.JPG)
 
 Solder the LED matrix to the backpack, and the backpack to the supplied male header as [described here](https://learn.adafruit.com/adafruit-led-backpack/1-2-8x8-matrix-assembly).
 

@@ -13,11 +13,10 @@ from openweather import OpenWeather
 import adafruit_requests as requests
 import adafruit_esp32spi.adafruit_esp32spi_socket as socket
 
-
 '''
 Add a `secrets.py` to your filesystem that has a dictionary called `secrets`
 with "ssid" and "password" keys for your WiFi credentials, "apikey" for your
-Openweather API key.
+Openweather API key, and "lat" and "lng" for your decimal co-ordinates.
 DO NOT share that file or commit it into Git or other source control.
 '''
 try:
@@ -26,15 +25,22 @@ except ImportError:
     print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
 
+
 '''
-GLOBALS
+CONSTANTS
 '''
 LED_R = 25
 LED_G = 26
 LED_B = 27
 I2C_SDA = board.GP4
 I2C_SCL = board.GP5
+DISPLAY_PERIOD_NS = 15 * 1000000000
+FORECAST_PERIOD_NS = 15 * 60 * 1000000000
 
+
+'''
+GLOBALS
+'''
 saved_data = None
 iconset = {}
 debug = True
@@ -63,7 +69,7 @@ def setup_display():
     display = HT16K33Matrix(i2c)
     display.set_brightness(2)
     display.set_angle(2)
-    display.clear()
+    display.clear().draw()
     return display
 
 
@@ -75,14 +81,16 @@ def setup_button_a():
 
 
 def do_connect(e, s, p):
-    set_led(e, 0.5, 0.3, 0)
+    set_led(e, 0.5, 0.2, 0)
     while not e.is_connected:
         try:
             e.connect_AP(s, p)
         except RuntimeError as e:
-            if debug: print("Could not connect to AP, retrying: ", e)
+            if debug:
+                print("[DEBUG] Could not connect to AP, retrying: ", e)
             continue
-    if debug: print("Connected to", str(e.ssid, "utf-8"), "\tRSSI:", e.rssi)
+    if debug:
+        print("[DEBUG] Connected to", str(e.ssid, "utf-8"), "\tRSSI:", e.rssi)
     set_led(e, 0, 0.5, 0)
 
 
@@ -120,7 +128,7 @@ def display_weather(matrix, display_data=None):
         icon = iconset[display_data["icon"]]
     except:
         icon = iconset["none"]
-    print(icon)
+
     # Store the current icon and forecast string
     # (we will need to re-use it if the 'refresh display' timer fires, or
     # the device goes offline and receives no new forecasts)
@@ -170,6 +178,81 @@ def setup_icons(matrix):
     iconset["none"] = 12
 
 
+"""
+This function sets the matrix pixels from the outside in, in a spiral pattern
+"""
+def app_intro(matrix):
+    x = 7
+    y = 0
+    dx = 0
+    dy = 1
+    mx = 6
+    my = 7
+    nx = 0
+    ny = 0
+
+    for i in range(0, 64):
+        matrix.plot(x, y, 1).draw()
+
+        if dx == 1 and x == mx:
+            dy = 1
+            dx = 0
+            mx -= 1
+        elif dx == -1 and x == nx:
+            nx += 1
+            dy = -1
+            dx = 0
+        elif dy == 1 and y == my:
+            dy = 0
+            dx = -1
+            my -= 1
+        elif dy == -1 and y == ny:
+            dx = 1
+            dy = 0
+            ny += 1
+
+        x += dx
+        y += dy
+        sleep(0.015)
+
+"""
+This function clears the matrix pixels from the inside out, in a spiral pattern
+"""
+def app_outro(matrix):
+    x = 4
+    y = 3
+    dx = -1
+    dy = 0
+    mx = 5
+    my = 4
+    nx = 3
+    ny = 2
+
+    for i in range(0, 64):
+        matrix.plot(x, y, 0).draw()
+
+        if dx == 1 and x == mx:
+            dy = -1
+            dx = 0
+            mx += 1
+        elif dx == -1 and x == nx:
+            nx -= 1
+            dy = 1
+            dx = 0
+        elif dy == 1 and y == my:
+            dy = 0
+            dx = 1
+            my += 1
+        elif dy == -1 and y == ny:
+            dx = -1
+            dy = 0
+            ny -= 1
+
+        x += dx
+        y += dy
+        sleep(0.015)
+
+
 def get_time(timeout=10):
     # https://github.com/micropython/micropython/blob/master/ports/esp8266/modules/ntptime.py
     # Modify the standard code to extend the timeout, and catch OSErrors triggered when the
@@ -194,7 +277,7 @@ def get_time(timeout=10):
 
 def set_rtc(timeout=10):
     now_time = get_time(timeout)
-    if now_time is not None:
+    if now_time:
         time_data = localtime(now_time)
         time_data = time_data[0:3] + (0,) + time_data[3:6] + (0,)
         RTC().datetime(time_data)
@@ -219,30 +302,46 @@ requests.set_socket(socket, esp32)
 
 # Set up Open Weather
 open_weather_call_count = 0
+open_weather = OpenWeather(requests, secrets["apikey"], True)
 weather_data = {}
+do_show = True
+is_rtc_set = False
+last_check = localtime()
+
+"""
 # Test data
 weather_data["icon"] = "rain"
 weather_data["cast"] = "rain"
 weather_data["temp"] = 11.5
+"""
 
-open_weather = OpenWeather(requests, secrets["apikey"], True)
-
-do_show = True
+"""
+# Display banner
+matrix.clear().draw()
+matrix.scroll_text("    PicoWeather 1.0.0    ", 0.08)
+sleep(0.5)
+app_intro(matrix)
+app_outro(matrix)
+"""
 
 # Primary loop
 while True:
     if not esp32.is_connected:
         do_connect(esp32, secrets["ssid"], secrets["password"])
-        get_time()
+        is_rtc_set = set_rtc()
+        if debug and is_rtc_set:
+            print("[DEBUG] RTC set")
 
     # Check the clock
-    now = monotonic_ns()
-    if now % 900000000000 == 0 or do_show:
+    ns_tick = monotonic_ns()
+    if (ns_tick % FORECAST_PERIOD_NS == 0 or do_show) and open_weather_call_count < 990:
         # Get a forecast every 15 mins
         forecast = open_weather.request_forecast(secrets["lat"], secrets["lng"])
         if "err" in forecast and debug:
-            print(forecast["err"])
+            print("[ERROR] " + forecast["err"])
         elif "data" in forecast and "hourly" in forecast["data"]:
+            if debug:
+                print("[DEBUG] HTTP status:", forecast["data"]["statuscode"])
             # Get second item in array: this is the weather one hour from now
             item = forecast["data"]["hourly"][0]
             wid = 0
@@ -276,22 +375,29 @@ while True:
             if weather_data["cast"] == "Clear":
                 # Set clear icon by time of day
                 parts = item["weather"][0]["icon"].split(".")
-                diurnal = parts[0][:len(parts[0]) - 1]
-                if diurnal == "d":
-                    weather_data["icon"] += "day"
-                    weather_data["cast"] += " day"
-                else:
+                diurnal = parts[0][- 1]
+                if diurnal == "n":
                     weather_data["icon"] += "night"
                     weather_data["cast"] += " night"
+                else:
+                    weather_data["icon"] += "day"
+                    weather_data["cast"] += " day"
 
             # Send the icon name to the device
             weather_data["temp"] = item["feels_like"]
 
             # Update the tally, or zero on a new day
             open_weather_call_count += 1
+            now = localtime()
+            if debug:
+                print("[DEBUG] Day:",now[2],"API call count:",open_weather_call_count)
+            if now[2] != last_check[2]:
+                # A new day, so reset the call count
+                open_weather_call_count = 0
+            last_check = now
             do_show = True
 
-    if now % 15000000000 == 0 or do_show:
+    if ns_tick % DISPLAY_PERIOD_NS == 0 or do_show:
         # Update the display every 2 mins, or on a new forecast
         display_weather(matrix, weather_data)
         do_show = False

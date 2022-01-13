@@ -30,8 +30,8 @@ class OpenWeather:
     # *********** CONSTRUCTOR **********
 
     def __init__(self, requests_obj=None, key=None, do_debug=False):
-        assert key != None and key != "", "ERROR - OpenWeather() requires an API key"
-        assert requests_obj != None, "ERROR - OpenWeather() requires a valid requests instance"
+        assert key != None and key != "", "[ERROR] OpenWeather() requires an API key"
+        assert requests_obj != None, "[ERROR] OpenWeather() requires a valid requests instance"
 
         # Set private properties
         self.debug = do_debug
@@ -61,7 +61,8 @@ class OpenWeather:
         url = self.FORECAST_URL
         url += "?lat={:.6f}&lon={:.6f}&appid={}".format(latitude, longitude, self.apikey)
         url = self._add_options(url)
-        print(url)
+        if self.debug:
+            print("[DEBUG] Request URL: " + url)
         return self._send_request(url)
 
 
@@ -79,11 +80,12 @@ class OpenWeather:
         unit_types = ["metric", "imperal", "standard"]
         requested_units = requested_units.lower()
         if not requested_units in unit_types:
-            if self.debug:
-                print("OpenWeather.set_units() incorrect units option selected (" + requested_units + "); using default value (standard)")
+            print("[ERROR] OpenWeather.set_units() incorrect units option selected (" + requested_units + "); using default value (standard)")
             requested_units = "standard"
 
         self.units = requested_units
+        if self.debug:
+            print("[DEBUG] OpenWeather units set: " + self.units)
         return self
 
 
@@ -103,11 +105,12 @@ class OpenWeather:
                     "mk", "no", "nl", "pl", "pt", "pt_br", "ro", "ru", "se", "sv", "sk", "sl", "sp", "es", "sr", "th", "tr", "ua", "uk", "vi", "zh_cn", "zh_tw", "zu"]
         language = language.lower()
         if not language in lang_types:
-            if self.debug:
-                print("OpenWeather.set_language() incorrect language option selected (" + language + "); using default value (en)")
-                language = "en"
+            print("[ERROR] OpenWeather.set_language() incorrect language option selected (" + language + "); using default value (en)")
+            language = "en"
 
             self.lang = language
+            if self.debug:
+                print("[DEBUG] OpenWeather language set: " + self.lang)
             return self
 
     def exclude(self, list=[]):
@@ -117,9 +120,8 @@ class OpenWeather:
             for exclude_type in exclude_types:
                 if item == type: matches.append(item)
 
-        if matches:
-            if self.debug:
-                print("OpenWeather.exclude() incorrect exclusions passed")
+        if not matches:
+            print("[ERROR] OpenWeather.exclude() incorrect exclusions passed")
             return self
 
         self.excludes = ""
@@ -129,7 +131,7 @@ class OpenWeather:
         if self.excludes:
             self.excludes = self.excludes[0: len(self.excludes) - 1]
         if self.debug:
-            print("OpenWeather excludes set: " + self.excludes)
+            print("[DEBUG] OpenWeather excludes set: " + self.excludes)
         return self
 
     # *********PRIVATE FUNCTIONS - DO NOT CALL **********
@@ -155,22 +157,29 @@ class OpenWeather:
             response (response):    The HTTPS response.
 
         Returns
-            The latest request count, or -1 on error.
+            Dictionary containing 'data' or 'err' keys.
         """
-        out_data = None
-        in_data = response.json()
-        response.close()
+        err = ""
+        data = ""
 
-        print(in_data)
-        if not in_data:
-            err = "Unable to retrieve forecast data (code: " + str(in_data["statuscode"]) + ")"
+        if response.status_code != 200:
+            err = "Unable to retrieve forecast data (code: " + str(response.status_code) + ")"
         else:
             try:
                 # Have we valid JSON?
-                out_data = in_data
-            except:
-                return {"err": "Unable to decode data received from Open Weather"}
-        return {"data": in_data}
+                data = response.json()
+                data["statuscode"] = response.status_code
+            except e:
+                err = "Unable to decode data received from Open Weather: " + str(e)
+
+        response.close()
+
+        if err:
+            return {"err": err}
+        else:
+            if self.debug:
+                print("[DEBUG] Received data:",data)
+            return {"data": data}
 
 
     def _check_coords(self, longitude=999.0, latitude=999.0, caller="function"):
@@ -188,30 +197,25 @@ class OpenWeather:
         try:
             longitude = float(longitude)
         except:
-            if self.debug:
-                print("OpenWeather." + caller + "() can't process supplied longitude value")
-                return False
+            print("[ERROR] OpenWeather." + caller + "() can't process supplied longitude value")
+            return False
 
         try:
             latitude = float(latitude)
         except:
-            if self.debug:
-                print("OpenWeather." + caller + "() can't process supplied latitude value")
-                return False
+            print("[ERROR] OpenWeather." + caller + "() can't process supplied latitude value")
+            return False
 
         if longitude == 999.0 or latitude == 999.0:
-            if self.debug:
-                print("OpenWeather." + caller + "() requires valid latitude/longitude co-ordinates")
-                return False
+            print("[ERROR] OpenWeather." + caller + "() requires valid latitude/longitude co-ordinates")
+            return False
 
         if latitude > 90.0 or latitude < -90.0:
-            if self.debug:
-                print("OpenWeather." + caller + "() requires valid a latitude co-ordinate (value out of range)")
+            print("[ERROR] OpenWeather." + caller + "() requires valid a latitude co-ordinate (value out of range)")
             return False
 
         if longitude > 180.0 or longitude < -180.0:
-            if self.debug:
-                print("OpenWeather." + caller + "() requires valid a latitude co-ordinate (value out of range)")
+            print("[ERROR] OpenWeather." + caller + "() requires valid a latitude co-ordinate (value out of range)")
             return False
         return True
 
