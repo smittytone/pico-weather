@@ -25,12 +25,19 @@ import adafruit_esp32spi.adafruit_esp32spi_socket as socket
 
 '''
 Add a `secrets.py` to your filesystem that has a dictionary called `secrets`
-with "ssid" and "password" keys for your WiFi credentials, "apikey" for your
-Openweather API key, and "lat" and "lng" for your decimal co-ordinates.
+with the following keys:
+
+* "ssid", "password" -- your WiFi credentials
+* "apikey"           -- your Openweather API key
+* "lat", "lng"       -- your decimal co-ordinates
+* "tz"               -- your timezone offset (+/-) from GMT
+
 DO NOT share that file or commit it into Git or other source control.
 '''
 try:
     from secrets import secrets
+    if not "ssid" in secrets: raise
+    if not "password" in secrets: raise
 except ImportError:
     print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
@@ -324,13 +331,17 @@ last_check = localtime()
 while True:
     if not esp32.is_connected:
         do_connect(esp32, secrets["ssid"], secrets["password"])
-        is_rtc_set = set_time(esp32)
+        tz = secrets["tz"] if "tz" in secrets else 0
+        is_rtc_set = set_time(esp32, tz)
 
     # Check the clock
     ns_tick = monotonic_ns()
     if (ns_tick % FORECAST_PERIOD_NS == 0 or do_show) and open_weather_call_count < 990:
         # Get a forecast every 15 mins
-        forecast = open_weather.request_forecast(secrets["lat"], secrets["lng"])
+        lat = secrets["lat"] if "lat" in secrets else 0
+        lng = secrets["lng"] if "lng" in secrets else 0
+        forecast = open_weather.request_forecast(lat, lng)
+
         if "err" in forecast and debug:
             print("[ERROR] " + forecast["err"])
         elif "data" in forecast and "hourly" in forecast["data"]:
