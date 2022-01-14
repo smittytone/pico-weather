@@ -7,7 +7,6 @@ License:        MIT
 Copyright:      2022
 '''
 
-
 '''
 IMPORTS
 '''
@@ -39,7 +38,7 @@ try:
     if not "ssid" in secrets: raise
     if not "password" in secrets: raise
 except ImportError:
-    print("WiFi secrets are kept in secrets.py, please add them there!")
+    print("[ERROR] WiFi credentials are stored in `secrets.py`, please add them there")
     raise
 
 
@@ -343,7 +342,7 @@ while True:
             # Adjust troublesome icon names
             if wid == 771: weather_data["cast"] = "Windy"
             if wid == 871: weather_data["cast"] = "Tornado"
-            if wid > 699 and wid < 770: weather_data["cast"] = "Foggy"
+            if 699 < wid < 770: weather_data["cast"] = "Foggy"
             weather_data["icon"] = weather_data["cast"].lower()
 
             if weather_data["cast"] == "Clouds":
@@ -354,7 +353,7 @@ while True:
                     weather_data["icon"] = "cloudy"
                     weather_data["cast"] = "Cloudy"
 
-            if wid > 602 and wid < 620:
+            if 602 < wid < 620:
                 weather_data["icon"] = "sleet"
                 weather_data["cast"] = "Sleet"
 
