@@ -51,7 +51,7 @@ LED_G = 26
 LED_B = 27
 I2C_SDA = board.GP4
 I2C_SCL = board.GP5
-DISPLAY_PERIOD_NS = 15 * 1000000000
+DISPLAY_PERIOD_NS = 20 * 1000000000
 FORECAST_PERIOD_NS = 15 * 60 * 1000000000
 
 
@@ -66,6 +66,14 @@ debug = True
 '''
 FUNCTIONS
 '''
+
+'''
+Configure the PicoWireless' ESP32.
+
+Returns:
+    An esp32spi_control object through which the app will
+    communicate with the ESP32.
+'''
 def setup_esp32():
     esp32_cs = DigitalInOut(board.GP7)
     esp32_ready = DigitalInOut(board.GP10)
@@ -74,6 +82,12 @@ def setup_esp32():
     return adafruit_esp32spi.ESP_SPIcontrol(esp32_spi, esp32_cs, esp32_ready, esp32_reset)
 
 
+'''
+Configure the HT16K33-based 8x8 LED matrix.
+
+Returns:
+    An ht16k33matrix object.
+'''
 def setup_display():
     # Power the matrix on GPIO 3
     pwr_pin = DigitalInOut(board.GP3)
@@ -84,12 +98,22 @@ def setup_display():
     i2c = busio.I2C(I2C_SCL, I2C_SDA)
     while not i2c.try_lock(): pass
     display = HT16K33Matrix(i2c)
+
+    # Set these according to your preference
     display.set_brightness(2)
     display.set_angle(2)
+
+    # Clear the screen
     display.clear().draw()
     return display
 
 
+'''
+Configure the PicoWireless' A button.
+
+Returns:
+    A GPIO pin object.
+'''
 def setup_button_a():
     button = DigitalInOut(board.GP12)
     button.direction = Direction.INPUT
@@ -97,6 +121,14 @@ def setup_button_a():
     return button
 
 
+'''
+Connect the PicoWireless to WiFi.
+
+Args:
+    e [esp32spi_control]    The ESP32 interface.
+    s [string]              The WiFi SSID.
+    p [string]              The WiFi password.
+'''
 def do_connect(e, s, p):
     set_led(e, 0.5, 0.2, 0)
     while not e.is_connected:
@@ -111,20 +143,30 @@ def do_connect(e, s, p):
     set_led(e, 0, 0.5, 0)
 
 
+'''
+Set the PicoWireless RGB LED.
+
+Args:
+    e [esp32spi_control]    The ESP32 interface.
+    r [float]               A red value from 0.0 to 1.0.
+    g [float]               A green value from 0.0 to 1.0.
+    b [float]               A blue value from 0.0 to 1.0.
+'''
 def set_led(e, r, g, b):
     e.set_analog_write(LED_R, 1 - r)
     e.set_analog_write(LED_B, 1 - b)
     e.set_analog_write(LED_G, 1 - g)
 
 
-def display_weather(matrix, display_data=None):
-    """
-    This function is called in response to a message from the server containing
-    a new hour-ahead weather forecast, or in response to a timer-fire if the user
-    has applied the 'refresh display' setting. Refreshing the display shows the
-    current forecast again, and the current forecast will continue to be shown
-    if the device goes offline for any period
-    """
+'''
+Display the current forecast as a string of weather condition and
+temperature, followed by the weather condition icon.
+
+Args:
+    display [ht16k33matrix] The matrix display.
+    display_data [dict]     The weather forecast to present.
+'''
+def display_weather(display, display_data=None):
     global saved_data
 
     # Bail if we have no data passed in
@@ -135,10 +177,10 @@ def display_weather(matrix, display_data=None):
         display_data = saved_data
 
     # Prepare the string used to display the weather forecast by name...
-    ds = "    " + display_data["cast"][0:1].upper() + display_data["cast"][1:] + "  "
+    scroll_text = "    " + display_data["cast"][0:1].upper() + display_data["cast"][1:] + "  "
 
     # ...then add the forecast temperature...
-    ds += ("Out: {:.1f}".format(display_data["temp"]) + "\x7F" + "c")
+    scroll_text += ("Out: {:.1f}".format(display_data["temp"]) + "\x7F" + "c")
 
     # Prepare an icon to display
     try:
@@ -146,37 +188,40 @@ def display_weather(matrix, display_data=None):
     except:
         icon = iconset["none"]
 
-    # Store the current icon and forecast string
-    # (we will need to re-use it if the 'refresh display' timer fires, or
-    # the device goes offline and receives no new forecasts)
-    saved_data = display_data
-
     # Display the forecast if we should display it
-    matrix.clear()
-    matrix.scroll_text(ds + "    ", 0.08)
+    display.clear()
+    display.scroll_text(scroll_text + "    ", 0.08)
+    saved_data = display_data
 
     # Pause for half a second
     sleep(0.5)
 
     # Display the weather icon
-    matrix.set_character(icon).draw()
+    display.set_character(icon).draw()
 
 
-def setup_icons(matrix):
+'''
+Define the app's custom characters, stored in the matrix display object,
+and the dictionary that binds icon names to character codes.
+
+Args:
+    display [ht16k33matrix] The matrix display
+'''
+def setup_icons(display):
     # Set up weather icons using user-definable characters
-    matrix.define_character(b"\x91\x42\x18\x3d\xbc\x18\x42\x89", 0)
-    matrix.define_character(b"\x31\x7A\x78\xFA\xFC\xF9\x7A\x30", 1)
-    matrix.define_character(b"\x31\x7A\x78\xFA\xFC\xF9\x7A\x30", 2)
-    matrix.define_character(b"\x28\x92\x54\x38\x38\x54\x92\x28", 3)
-    matrix.define_character(b"\x32\x7D\x7A\xFD\xFA\xFD\x7A\x35", 4)
-    matrix.define_character(b"\x28\x28\x28\x28\x28\xAA\xAA\x44", 5)
-    matrix.define_character(b"\xAA\x55\xAA\x55\xAA\x55\xAA\x55", 6)
-    matrix.define_character(b"\x30\x78\x78\xF8\xF8\xF8\x78\x30", 7)
-    matrix.define_character(b"\x30\x48\x48\x88\x88\x88\x48\x30", 8)
-    matrix.define_character(b"\x00\x00\x00\x0F\x38\xE0\x00\x00", 9)
-    matrix.define_character(b"\x00\x40\x6C\xBE\xBB\xB1\x60\x40", 10)
-    matrix.define_character(b"\x3C\x42\x81\xC3\xFF\xFF\x7E\x3C", 11)
-    matrix.define_character(b"\x00\x00\x40\x9D\x90\x60\x00\x00", 12)
+    display.define_character(b"\x91\x42\x18\x3d\xbc\x18\x42\x89", 0)
+    display.define_character(b"\x31\x7A\x78\xFA\xFC\xF9\x7A\x30", 1)
+    display.define_character(b"\x31\x7A\x78\xFA\xFC\xF9\x7A\x30", 2)
+    display.define_character(b"\x28\x92\x54\x38\x38\x54\x92\x28", 3)
+    display.define_character(b"\x32\x7D\x7A\xFD\xFA\xFD\x7A\x35", 4)
+    display.define_character(b"\x28\x28\x28\x28\x28\xAA\xAA\x44", 5)
+    display.define_character(b"\xAA\x55\xAA\x55\xAA\x55\xAA\x55", 6)
+    display.define_character(b"\x30\x78\x78\xF8\xF8\xF8\x78\x30", 7)
+    display.define_character(b"\x30\x48\x48\x88\x88\x88\x48\x30", 8)
+    display.define_character(b"\x00\x00\x00\x0F\x38\xE0\x00\x00", 9)
+    display.define_character(b"\x00\x40\x6C\xBE\xBB\xB1\x60\x40", 10)
+    display.define_character(b"\x3C\x42\x81\xC3\xFF\xFF\x7E\x3C", 11)
+    display.define_character(b"\x00\x00\x40\x9D\x90\x60\x00\x00", 12)
 
     # Set up a table to map incoming weather condition names
     # (eg. "clearday") to user-definable character Ascii values
@@ -195,90 +240,28 @@ def setup_icons(matrix):
     iconset["none"] = 12
 
 
-"""
-This function sets the matrix pixels from the outside in, in a spiral pattern
-"""
-def app_intro(matrix):
-    x = 7
-    y = 0
-    dx = 0
-    dy = 1
-    mx = 6
-    my = 7
-    nx = 0
-    ny = 0
+'''
+Show the app's start-up message.
 
-    for i in range(0, 64):
-        matrix.plot(x, y, 1).draw()
-
-        if dx == 1 and x == mx:
-            dy = 1
-            dx = 0
-            mx -= 1
-        elif dx == -1 and x == nx:
-            nx += 1
-            dy = -1
-            dx = 0
-        elif dy == 1 and y == my:
-            dy = 0
-            dx = -1
-            my -= 1
-        elif dy == -1 and y == ny:
-            dx = 1
-            dy = 0
-            ny += 1
-
-        x += dx
-        y += dy
-        sleep(0.015)
-
-
-"""
-This function clears the matrix pixels from the inside out, in a spiral pattern
-"""
-def app_outro(matrix):
-    x = 4
-    y = 3
-    dx = -1
-    dy = 0
-    mx = 5
-    my = 4
-    nx = 3
-    ny = 2
-
-    for i in range(0, 64):
-        matrix.plot(x, y, 0).draw()
-
-        if dx == 1 and x == mx:
-            dy = -1
-            dx = 0
-            mx += 1
-        elif dx == -1 and x == nx:
-            nx -= 1
-            dy = 1
-            dx = 0
-        elif dy == 1 and y == my:
-            dy = 0
-            dx = 1
-            my += 1
-        elif dy == -1 and y == ny:
-            dx = -1
-            dy = 0
-            ny -= 1
-
-        x += dx
-        y += dy
-        sleep(0.015)
-
-
-det show_startup(display):
+Args:
+    display [ht16k33matrix] The matrix display.
+'''
+def show_startup(display):
     display.clear().draw()
-    display.scroll_text("    PicoWeather 1.0.0    ", 0.08)
+    display.scroll_text("    PicoWeather 1.0.0    ", 0.05)
     sleep(0.5)
-    app_intro(display)
-    app_outro(display)
 
 
+'''
+Set the RTC using the ESP32.
+
+Args:
+    e [esp32spi_control]    The ESP32 interface.
+    timezone_offset [int]   An optional +/- hour offset from GMT.
+
+Returns:
+    Whether the RTC was set (True) or not (False).
+'''
 def set_time(e, timezone_offset=0):
     try:
         now = e.get_time()
@@ -291,10 +274,11 @@ def set_time(e, timezone_offset=0):
 
 
 '''
-Set some weather test data
+Set some weather test data.
 '''
 def get_test_data():
-    test_data["icon"] = "rain"
+    test_data = {}
+    test_data["icon"] = "snow"
     test_data["cast"] = "rain"
     test_data["temp"] = 11.5
     return test_data
@@ -323,21 +307,21 @@ weather_data = {}
 do_show = True
 is_rtc_set = False
 last_check = localtime()
+last_forecast = monotonic_ns()
+last_display = last_forecast
 
 # Display banner
-# show_startup(matrix)
+show_startup(matrix)
 
 # Primary loop
 while True:
     if not esp32.is_connected:
         do_connect(esp32, secrets["ssid"], secrets["password"])
-        tz = secrets["tz"] if "tz" in secrets else 0
-        is_rtc_set = set_time(esp32, tz)
 
     # Check the clock
     ns_tick = monotonic_ns()
-    if (ns_tick % FORECAST_PERIOD_NS == 0 or do_show) and open_weather_call_count < 990:
-        # Get a forecast every 15 mins
+    if (ns_tick - last_forecast > FORECAST_PERIOD_NS or do_show) and open_weather_call_count < 990:
+        # Get a forecast every FORECAST_PERIOD_NS nanoseconds
         lat = secrets["lat"] if "lat" in secrets else 0
         lng = secrets["lng"] if "lng" in secrets else 0
         forecast = open_weather.request_forecast(lat, lng)
@@ -348,7 +332,7 @@ while True:
             if debug:
                 print("[DEBUG] HTTP status:", forecast["data"]["statuscode"])
             # Get second item in array: this is the weather one hour from now
-            item = forecast["data"]["hourly"][0]
+            item = forecast["data"]["hourly"][1]
             wid = 0
             if "weather" in item and len(item["weather"]) > 0:
                 weather_data["cast"] = item["weather"][0]["main"]
@@ -400,9 +384,17 @@ while True:
                 # A new day, so reset the call count
                 open_weather_call_count = 0
             last_check = now
+            last_forecast = ns_tick
             do_show = True
 
-    if ns_tick % DISPLAY_PERIOD_NS == 0 or do_show:
-        # Update the display every 2 mins, or on a new forecast
+            # Get the current time if it's not yet set
+            if not is_rtc_set:
+                tz = secrets["tz"] if "tz" in secrets else 0
+                is_rtc_set = set_time(esp32, tz)
+
+    if (ns_tick - last_display > DISPLAY_PERIOD_NS) or do_show:
+        # Update the display every DISPLAY_PERIOD_NS nanoseconds,
+        # or on a new forecast
         display_weather(matrix, weather_data)
         do_show = False
+        last_display = ns_tick

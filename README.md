@@ -55,11 +55,13 @@ Connect the Pico to your computer. When the `CIRCUITPY` volume appears, copy acr
 Create a file on the `CIRCUITPY` volume called `secrets.py` and add the following code to it, replacing the `...` with your own values:
 
 ```python
-secrets  = { "ssid": "...", "password": "...", "apikey": "...",
-             "lat": "...", "lng": "..." }
+secrets  = { "ssid": "...", "password": "...",
+             "apikey": "...",
+             "lat": ..., "lng": ...,
+             "tz" ... }
 ```
 
-`ssid` and `password` are your WiFi credentials; `apikey` is your OpenWeather API key; `lat` and `lng` are your location’s co-ordinates as decimal fraction values.
+`ssid` and `password` are your WiFi credentials; `apikey` is your OpenWeather API key; `lat` and `lng` are your location’s co-ordinates as decimal fraction values; `tz` is an optional plus or minus hours from GMT to indicate your timezone.
 
 Do not save this file in your repo.
 
@@ -71,6 +73,6 @@ For convenience, this repository includes software from Adafruit, specifically:
 * [adafruit_bus_device](https://github.com/adafruit/Adafruit_CircuitPython_BusDevice)
 * [adafruit_requests](https://github.com/adafruit/Adafruit_CircuitPython_Requests/)
 
-These libraries’ source code files are copyright © 2019 ladyada for Adafruit Industries and are issued under the terms of the [MIT Licence](./LICENSE.md).
+These libraries’ source code files are copyright © 2019 ladyada for Adafruit Industries and are issued under the terms of the [MIT Licence](./LICENSE.md).
 
 All other source code is copyright © 2020, 2022 Tony Smith and is also made available under the terms of the [MIT Licence](./LICENSE.md).
