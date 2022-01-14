@@ -1,4 +1,4 @@
-# Pico Weather 1.0.0
+# Pico Weather 1.0.1
 
 A Raspberry Pi Pico-based weather readout using the Pimoroni PicoWireless.
 
@@ -64,6 +64,13 @@ secrets  = { "ssid": "...", "password": "...",
 `ssid` and `password` are your WiFi credentials; `apikey` is your OpenWeather API key; `lat` and `lng` are your location’s co-ordinates as decimal fraction values; `tz` is an optional plus or minus hours from GMT to indicate your timezone.
 
 Do not save this file in your repo.
+
+## Release Notes
+
+* 1.0.1 *Unreleased*
+    * Improve periodic redisplay timing.
+* 1.0.0 *14 January 2022*
+    * Initial public release.
 
 ## Licence and Copyright
 

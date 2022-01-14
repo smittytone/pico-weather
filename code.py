@@ -1,7 +1,7 @@
 '''
 PicoWeather
 
-Version:        1.0.0
+Version:        1.0.1
 Author:         Tony Smith (@smittytone)
 License:        MIT
 Copyright:      2022
@@ -247,7 +247,7 @@ Args:
 '''
 def show_startup(display):
     display.clear().draw()
-    display.scroll_text("    PicoWeather 1.0.0    ", 0.05)
+    display.scroll_text("    PicoWeather 1.0.1 by @smittytone    ", 0.05)
     sleep(0.5)
 
 
@@ -374,6 +374,11 @@ while True:
             # Send the icon name to the device
             weather_data["temp"] = item["feels_like"]
 
+            # Get the current time if it's not yet set
+            if not is_rtc_set:
+                tz = secrets["tz"] if "tz" in secrets else 0
+                is_rtc_set = set_time(esp32, tz)
+
             # Update the tally, or zero on a new day
             open_weather_call_count += 1
             now = localtime()
@@ -386,14 +391,9 @@ while True:
             last_forecast = ns_tick
             do_show = True
 
-            # Get the current time if it's not yet set
-            if not is_rtc_set:
-                tz = secrets["tz"] if "tz" in secrets else 0
-                is_rtc_set = set_time(esp32, tz)
-
     if (ns_tick - last_display > DISPLAY_PERIOD_NS) or do_show:
         # Update the display every DISPLAY_PERIOD_NS nanoseconds,
         # or on a new forecast
         display_weather(matrix, weather_data)
+        last_display = monotonic_ns()
         do_show = False
-        last_display = ns_tick
