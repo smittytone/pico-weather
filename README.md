@@ -67,7 +67,7 @@ Do not save this file in your repo.
 
 ## Release Notes
 
-* 1.0.1 *Unreleased*
+* 1.0.1 *17 January 2022*
     * Improve periodic redisplay timing.
 * 1.0.0 *14 January 2022*
     * Initial public release.
