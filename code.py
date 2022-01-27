@@ -1,7 +1,7 @@
 '''
 PicoWeather
 
-Version:        1.0.1
+Version:        1.0.2
 Author:         Tony Smith (@smittytone)
 License:        MIT
 Copyright:      2022
@@ -38,7 +38,7 @@ try:
     if not "ssid" in secrets: raise
     if not "password" in secrets: raise
 except ImportError:
-    print("[ERROR] WiFi credentials are stored in `secrets.py`, please add them there")
+    log("WiFi credentials are stored in `secrets.py`, please add them there")
     raise
 
 
@@ -53,6 +53,8 @@ I2C_SCL = board.GP5
 DISPLAY_PERIOD_NS = 20 * 1000000000
 FORECAST_PERIOD_NS = 15 * 60 * 1000000000
 
+MSG_TYPE_ERROR = 0
+MSG_TYPE_DEBUG = 1
 
 '''
 GLOBALS
@@ -134,11 +136,9 @@ def do_connect(e, s, p):
         try:
             e.connect_AP(s, p)
         except RuntimeError as e:
-            if debug:
-                print("[DEBUG] Could not connect to AP, retrying: ", e)
+            log("Could not connect to AP, retrying: " + str(e), MSG_TYPE_DEBUG)
             continue
-    if debug:
-        print("[DEBUG] Connected to", str(e.ssid, "utf-8"), "\tRSSI:", e.rssi)
+    log("Connected to " + str(e.ssid, "utf-8") + " RSSI: " + str(e.rssi), MSG_TYPE_DEBUG)
     set_led(e, 0, 0.5, 0)
 
 
@@ -267,9 +267,21 @@ def set_time(e, timezone_offset=0):
         now = localtime(now[0] + timezone_offset)
         rtc.RTC().datetime = now
     except ValueError as err:
-        print("[ERROR] Could not set RTC: " + str(err))
+        log("Could not set RTC: " + str(err))
         return False
     return True
+
+
+'''
+Output manager
+'''
+def log(msg, type=MSG_TYPE_ERROR):
+    if type == MSG_TYPE_ERROR:
+        msg = "[ERROR] " + msg
+    if type == MSG_TYPE_DEBUG:
+        if not debug: return
+        msg = "[DEBUG] " + msg
+    print(msg)
 
 
 '''
@@ -326,10 +338,9 @@ while True:
         forecast = open_weather.request_forecast(lat, lng)
 
         if "err" in forecast and debug:
-            print("[ERROR] " + forecast["err"])
+            log(forecast["err"])
         elif "data" in forecast and "hourly" in forecast["data"]:
-            if debug:
-                print("[DEBUG] HTTP status:", forecast["data"]["statuscode"])
+            log("HTTP status: " + str(forecast["data"]["statuscode"]), MSG_TYPE_DEBUG)
             # Get second item in array: this is the weather one hour from now
             item = forecast["data"]["hourly"][1]
             wid = 0
@@ -382,8 +393,7 @@ while True:
             # Update the tally, or zero on a new day
             open_weather_call_count += 1
             now = localtime()
-            if debug:
-                print("[DEBUG] Day:",now[2],"API call count:",open_weather_call_count)
+            log("Day: {} API call count: {}".format(now[2], open_weather_call_count), MSG_TYPE_DEBUG)
             if now[2] != last_check[2]:
                 # A new day, so reset the call count
                 open_weather_call_count = 0

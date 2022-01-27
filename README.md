@@ -1,4 +1,4 @@
-# Pico Weather 1.0.1
+# Pico Weather 1.0.2
 
 A Raspberry Pi Pico-based weather readout using the Pimoroni PicoWireless.
 
@@ -67,6 +67,8 @@ Do not save this file in your repo.
 
 ## Release Notes
 
+* 1.0.2 *27 January 2022*
+    * Logging optimisation.
 * 1.0.1 *17 January 2022*
     * Improve periodic redisplay timing.
 * 1.0.0 *14 January 2022*
