@@ -1,15 +1,30 @@
-# Pico Weather 1.0.2
+# Pico Weather 2
 
-A Raspberry Pi Pico-based weather readout using the Pimoroni PicoWireless.
+A Raspberry Pi Pico-based weather readout. There are two versions: one (Model A) using the Pico and the Pimoroni PicoWireless.
 
 ![A Raspberry Pi Pico-based weather readout](./images/P1020223.JPG)
+
+And a second (Model B) based on the Raspberry Pi Pico W.
+
+## Versioning
+
+For this repo, I use semantic versioning — *major.minor.patch* — with a twist. Even *minor* values are reserved for Model A; Model B uses odd *minor* values. So if you build a Model B unit with code version 2.1.0 and I release 2.2.0, you can ignore it. The next version for you will by 2.1.x or 2.3.x.
 
 ## Requirements
 
 ### Hardware
 
+#### Model A
+
 * Raspberry Pi Pico with [CircuitPython installed](https://circuitpython.org/board/raspberry_pi_pico/).
 * [Pimoroni PicoWireless](https://shop.pimoroni.com/products/pico-wireless-pack).
+
+#### Model B
+
+* Raspberry Pi Pico W with [MicroPython installed](https://micropython.org/).
+
+#### All Models
+
 * [HT16K33-based 8x8 LED Matrix plus I2C backpack](https://www.adafruit.com/product/1856).
 * Male header.
 * Female-to-female DuPont jumper wires.
@@ -21,6 +36,8 @@ You will need to create an [OpenWeather account](https://openweathermap.org/appi
 ## Setup
 
 ### Hardware
+
+#### Model A
 
 This is slightly tricky because the PicoWireless docks onto a Pico with male header pins.
 
@@ -45,14 +62,38 @@ Now fit the Pico into the PicoWireless’ female header, taking care to get the 
 
 ![Use the DuPont wires to connect the display](./images/P1020219.JPG)
 
+#### Model B
+
+Attach the LED matrix backpack to pins 5-8 as listed above. Because no add-on board is used for WiFi, you can connect the LED to headers soldered either above or below the Pico W.
+
 ### Software
+
+#### Model A
 
 Connect the Pico to your computer. When the `CIRCUITPY` volume appears, copy across the following files and folders:
 
 * `code.py`
 * `lib`
 
-Create a file on the `CIRCUITPY` volume called `secrets.py` and add the following code to it, replacing the `...` with your own values:
+#### Model B
+
+Connect the Pico W to your computer. You will need the [`pyboard.py`](https://raw.githubusercontent.com/micropython/micropython/master/tools/pyboard.py) utility to install the required files:
+
+* Copy the `pyboard.py` code and save it to your computer at a location accessible via your terminal’s `$PATH` variable.
+* Copy the files with:
+
+```bash
+python3 pyboard.py -d <YOUR_DEVICE_FILE> -f cp main.py :main.py
+python3 pyboard.py -d <YOUR_DEVICE_FILE> -f cp openweather.py :openweather.py
+python3 pyboard.py -d <YOUR_DEVICE_FILE> -f cp ht16k33.py :ht16k33.py
+python3 pyboard.py -d <YOUR_DEVICE_FILE> -f cp ht16k33matrix.py :ht16k33matrix.py
+```
+
+You will need to determine the value you should substitue for `<YOUR_DEVICE_FILE>`. On Linux, it will probably be `/dev/ttyACM0`. On macOS, enter `ls /dev/cu*`. You should see an entry like: `/dev/cu.usbmodem14244201`. This is the Pico W’s device file.
+
+#### All Models
+
+Create a file on the mounted volume called `secrets.py` and add the following code to it, replacing the `...` with your own values:
 
 ```python
 secrets  = { "ssid": "...", "password": "...",
@@ -67,6 +108,9 @@ Do not save this file in your repo.
 
 ## Release Notes
 
+* 2.x.y *Unreleased*
+    * Add MicroPython version for Pico W, `2.1.0`.
+    * Bump the CircuitPython version for Pico + PicoWirelss to `2.0.0`.
 * 1.0.2 *27 January 2022*
     * Logging optimisation.
 * 1.0.1 *17 January 2022*
@@ -84,4 +128,4 @@ For convenience, this repository includes software from Adafruit, specifically:
 
 These libraries’ source code files are copyright © 2019 ladyada for Adafruit Industries and are issued under the terms of the [MIT Licence](./LICENSE.md).
 
-All other source code is copyright © 2020, 2022 Tony Smith and is also made available under the terms of the [MIT Licence](./LICENSE.md).
+All other source code is copyright © 2021, 2022 Tony Smith and is also made available under the terms of the [MIT Licence](./LICENSE.md).
