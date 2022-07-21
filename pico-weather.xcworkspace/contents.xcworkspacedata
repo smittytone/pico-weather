@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <Group
+      location = "group:circuitpython"
+      name = "circuitpython">
+      <FileRef
+         location = "group:code.py">
+      </FileRef>
+      <Group
+         location = "group:lib"
+         name = "lib">
+         <FileRef
+            location = "group:openweather.py">
+         </FileRef>
+         <FileRef
+            location = "group:ht16k33.py">
+         </FileRef>
+         <FileRef
+            location = "group:ht16k33matrix.py">
+         </FileRef>
+         <FileRef
+            location = "group:adafruit_requests.py">
+         </FileRef>
+         <Group
+            location = "group:adafruit_bus_device"
+            name = "adafruit_bus_device">
+            <FileRef
+               location = "group:i2c_device.py">
+            </FileRef>
+            <FileRef
+               location = "group:spi_device.py">
+            </FileRef>
+            <FileRef
+               location = "group:__init__.py">
+            </FileRef>
+         </Group>
+         <Group
+            location = "group:adafruit_esp32spi"
+            name = "adafruit_esp32spi">
+            <FileRef
+               location = "group:adafruit_esp32spi_wifimanager.py">
+            </FileRef>
+            <FileRef
+               location = "group:digitalio.py">
+            </FileRef>
+            <FileRef
+               location = "group:__init__.py">
+            </FileRef>
+            <FileRef
+               location = "group:adafruit_esp32spi_socket.py">
+            </FileRef>
+            <FileRef
+               location = "group:adafruit_esp32spi_wsgiserver.py">
+            </FileRef>
+            <FileRef
+               location = "group:adafruit_esp32spi.py">
+            </FileRef>
+            <FileRef
+               location = "group:PWMOut.py">
+            </FileRef>
+         </Group>
+      </Group>
+   </Group>
+   <Group
+      location = "group:/Users/tsmith/GitHub/pico-weather/micropython"
+      name = "micropython">
+      <FileRef
+         location = "group:main.py">
+      </FileRef>
+      <FileRef
+         location = "group:openweather.py">
+      </FileRef>
+      <FileRef
+         location = "group:ht16k33.py">
+      </FileRef>
+      <FileRef
+         location = "group:ht16k33matrix.py">
+      </FileRef>
+   </Group>
+   <FileRef
+      location = "group:README.md">
+   </FileRef>
+   <FileRef
+      location = "group:LICENSE.md">
+   </FileRef>
+</Workspace>
