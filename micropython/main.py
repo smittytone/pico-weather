@@ -138,8 +138,8 @@ def flash_led(count):
 Issue a UDP NTP request to get the time.
 
 Args:
-    timeout [int] An optional timeout. Default: 10 seconds.
-    
+    timeout [int]   An optional timeout. Default: 10 seconds.
+
 Returns:
     The time as an epoch timestamp, or None on error.
 '''
@@ -170,8 +170,8 @@ def get_time(timeout=10):
 Set the Pico W's RTC.
 
 Args:
-    timezone_offset [int] An optional +/- hour offset from GMT.
-    timeout [int]         An optional NTP check timeout. Default: 10 seconds.
+    timezone_offset [int]   An optional +/- hour offset from GMT.
+    timeout [int]           An optional NTP check timeout. Default: 10 seconds.
 
 Returns:
     Whether the RTC was set (True) or not (False).

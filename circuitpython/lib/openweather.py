@@ -7,7 +7,7 @@ class OpenWeather:
 
     NOTE this class does not parse the incoming data, which is highly complex.
         It is up to your application to extract the data you require.
-        
+
     CircuitPython version for Raspberry Pi Pico + Pimoroni PicoWireless
 
     Version:        2.0.0
@@ -18,7 +18,7 @@ class OpenWeather:
 
     # *********** CONSTANTS **********
 
-    VERSION = "1.0.0"
+    VERSION = "2.0.0"
     FORECAST_URL = "https://api.openweathermap.org/data/2.5/onecall"
 
     # *********Private Properties **********
@@ -47,13 +47,11 @@ class OpenWeather:
         """
         Make a request for future weather data.
 
-        @param {float}    longitude  - Longitude of location for which a forecast is required.
-        @param {float}    latitude   - Latitude of location for which a forecast is required.
-        @param {function} [callback] - Optional asynchronous operation callback.
-        *
-        @returns {table|string|null} If 'callback' is null, the function returns a table with key 'response';
-                                    if there was an error, the function returns a table with key 'error'.
-                                    If 'callback' is not null, the function returns nothing;
+        Args:
+            longitude [float]   Longitude of location for which a forecast is required.
+            latitude [float]    Latitude of location for which a forecast is required.
+
+        Returns:
         """
         # Check the supplied co-ordinates
         if not self._check_coords(longitude, latitude, "request_forecast"):
@@ -73,8 +71,8 @@ class OpenWeather:
         Specify the preferred weather report's units.
 
         Args:
-            units (string):     Country code indicating the type of units.
-                                Default: automatic, based on location.
+            units [string]  Country code indicating the type of units.
+                            Default: automatic, based on location.
 
         Returns:
             The instance (self)
@@ -96,7 +94,7 @@ class OpenWeather:
         Specify the preferred weather report's language.
 
         Args:
-            language (string):  Country code indicating the language.
+            language [string]   Country code indicating the language.
                                 Default: English.
 
         Returns:
@@ -139,27 +137,26 @@ class OpenWeather:
     # *********PRIVATE FUNCTIONS - DO NOT CALL **********
 
     """
-    Send a request to Dark Sky.
+    Send a request to OpenWeather.
 
     Args:
-        request_uri (string):      The HTTPS request to send.
+        request_uri [string]    The URL-encoded request to send.
 
     Returns:
-        The HTTPS response, or None
+        Dictionary containing `data` or `err` keys.
     """
     def _send_request(self, request_uri):
-        response = self.requests.get(request_uri)
-        return self._process_response(response)
+        return self._process_response(self.requests.get(request_uri))
 
     def _process_response(self, response):
         """
         Process a response received from OpenWeather.
 
         Args:
-            response (response):    The HTTPS response.
+            response [response] The HTTPS response.
 
         Returns
-            Dictionary containing 'data' or 'err' keys.
+            Dictionary containing `data` or `err` keys.
         """
         err = ""
         data = ""
@@ -186,12 +183,12 @@ class OpenWeather:
 
     def _check_coords(self, longitude=999.0, latitude=999.0, caller="function"):
         """
-        Check that valid co-ords have been supplied.
+        Check that valid co-ordinates have been supplied.
 
         Args:
-            longitude (float):      Longitude of location for which a forecast is required.
-            latitude (float):       Latitude of location for which a forecast is required.
-            caller (string):        The name of the calling function, for error reporting.
+            longitude [float]   Longitude of location for which a forecast is required.
+            latitude [float]    Latitude of location for which a forecast is required.
+            caller [string]     The name of the calling function, for error reporting.
 
         Returns:
             Whether the supplied co-ordinates are valid (True) or not (False).
@@ -227,7 +224,7 @@ class OpenWeather:
         Add URL-encoded options to the request URL. Used when assembling HTTPS requests.
 
         Args:
-            baseurl (string):   Optional base URL.
+            baseurl [string]    Optional base URL.
 
         Returns
             The full URL with added options.

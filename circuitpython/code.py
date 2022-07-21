@@ -205,7 +205,7 @@ Define the app's custom characters, stored in the matrix display object,
 and the dictionary that binds icon names to character codes.
 
 Args:
-    display [ht16k33matrix] The matrix display
+    display [ht16k33matrix] The matrix display.
 '''
 def setup_icons(display):
     # Set up weather icons using user-definable characters
@@ -248,7 +248,7 @@ Args:
 '''
 def show_startup(display):
     display.clear().draw()
-    display.scroll_text("    PicoWeather 1.0.1 by @smittytone    ", 0.05)
+    display.scroll_text("    PicoWeather 2.0.0 by @smittytone    ", 0.05)
     sleep(0.5)
 
 
@@ -315,7 +315,7 @@ requests.set_socket(socket, esp32)
 open_weather_call_count = 0
 open_weather = OpenWeather(requests, secrets["apikey"], True)
 weather_data = {}
-# weather_data = get_test_date()
+# weather_data = get_test_data()
 do_show = True
 is_rtc_set = False
 last_check = localtime()
