@@ -21,7 +21,7 @@ For this repo, I use semantic versioning — *major.minor.patch* — with a twi
 
 #### Model B
 
-* Raspberry Pi Pico W with [MicroPython installed](https://micropython.org/).
+* Raspberry Pi Pico W with [MicroPython installed](https://micropython.org/download/rp2-pico-w/).
 
 #### All Models
 
