@@ -6,7 +6,7 @@ A Raspberry Pi Pico-based weather readout. There are two versions: one (Model A)
 
 And a second (Model B) based on the Raspberry Pi Pico W:
 
-![A Raspberry Pi Pico W-based weather readout](./images/P1020223.JPG)
+![A Raspberry Pi Pico W-based weather readout](./images/IMG_1032.JPG)
 
 ## Versioning
 
