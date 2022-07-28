@@ -15,7 +15,7 @@ import network
 import usocket as socket
 import ustruct as struct
 from machine import Pin, I2C, RTC
-from time import ticks_us, sleep, localtime
+from time import ticks_us, ticks_diff, sleep, localtime
 from micropython import const
 from ht16k33matrix import HT16K33Matrix
 from openweather import OpenWeather
@@ -348,7 +348,7 @@ while True:
 
     # Check the clock
     us_tick = ticks_us()
-    if (us_tick - last_forecast > FORECAST_PERIOD_US or do_show) and open_weather_call_count < 990:
+    if (ticks_diff(us_tick, last_forecast) > FORECAST_PERIOD_US or do_show) and open_weather_call_count < 990:
         # Get a forecast every FORECAST_PERIOD_US microseconds
         lat = secrets["lat"] if "lat" in secrets else 0
         lng = secrets["lng"] if "lng" in secrets else 0
@@ -418,12 +418,12 @@ while True:
             last_forecast = us_tick
             do_show = True
 
-    if (us_tick - last_display > DISPLAY_PERIOD_US) or do_show:
+    if (ticks_diff(us_tick, last_display) > DISPLAY_PERIOD_US) or do_show:
         # Update the display every DISPLAY_PERIOD_US microseconds,
         # or on a new forecast
         display_weather(matrix, weather_data)
-        last_display = us_tick
-        do_show = False
         now = localtime()
         time = "{:2d}:{:2d}:{:2d}".format(now[3], now[4], now[5])
-        debug_print("Re-display @:",time)
+        debug_print("Re-display @:",time,us_tick,last_display)
+        last_display = us_tick
+        do_show = False
