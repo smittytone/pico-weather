@@ -11,13 +11,11 @@ Copyright:      2022
 '''
 IMPORTS
 '''
-import rtc
 import network
-import urequests as requests
 import usocket as socket
 import ustruct as struct
-from machine import Pin, I2C
-from time import monotonic_ns, sleep, localtime
+from machine import Pin, I2C, RTC
+from time import ticks_us, sleep, localtime
 from micropython import const
 from ht16k33matrix import HT16K33Matrix
 from openweather import OpenWeather
@@ -45,11 +43,11 @@ except ImportError:
 '''
 CONSTANTS
 '''
-I2C_SDA = 4
-I2C_SCL = 5
-DISPLAY_PERIOD_NS = 20 * 1000000000
-FORECAST_PERIOD_NS = 15 * 60 * 1000000000
-CONNECT_TIMEOUT_SECONDS = 20
+I2C_SDA = Pin(4)
+I2C_SCL = Pin(5)
+DISPLAY_PERIOD_US = 20 * 1000000
+FORECAST_PERIOD_US = 15 * 60 * 1000000
+CONNECT_TIMEOUT_S = 20
 
 
 '''
@@ -75,7 +73,7 @@ def setup_display():
     pwr_pin = Pin(3, Pin.OUT, value=1)
 
     # Set up the I2C bus on GPIO 4, GPIO 5
-    i2c = I2C(0, scl=Pin(I2C_SCL), sda=Pin(I2C_SCL))
+    i2c = I2C(0, scl=I2C_SCL, sda=I2C_SDA)
     display = HT16K33Matrix(i2c)
 
     # Set these according to your preference
@@ -99,9 +97,10 @@ Returns:
     Connection made (True) or connection error (False).
 '''
 def do_connect(w, s, p):
+    debug_print("Attempting to connect to WiFi")
     led.off()
     w.connect(s, p)
-    max_wait_s = CONNECT_TIMEOUT_SECONDS
+    max_wait_s = CONNECT_TIMEOUT_S
     while max_wait_s > 0:
         if w.status() < 0 or w.status() >= 3:
             break
@@ -110,9 +109,11 @@ def do_connect(w, s, p):
         sleep(1)
 
     if w.status() == 3:
+        debug_print("Connected to WiFi")
         led.on()
         return True
 
+    debug_print("Failed to connect to WiFi")
     flash_led(5)
     led.off()
     return False
@@ -161,7 +162,7 @@ def get_time(timeout=10):
         val = struct.unpack("!I", msg[40:44])[0]
         return_value = val - 3155673600
     except:
-        print("Could not set NTP", err)
+        error_print("Could not set NTP", err)
     sock.close()
     return return_value
 
@@ -220,7 +221,7 @@ def display_weather(display, display_data=None):
 
     # Display the forecast if we should display it
     display.clear()
-    display.scroll_text(scroll_text + "    ", 0.08)
+    display.scroll_text(scroll_text + "    ", 0.07)
     saved_data = display_data
 
     # Pause for half a second
@@ -278,7 +279,7 @@ Args:
 '''
 def show_startup(display):
     display.clear().draw()
-    display.scroll_text("    PicoWeather 1.0.1 by @smittytone    ", 0.05)
+    display.scroll_text("    PicoWeather 2.1.0 by @smittytone    ", 0.05)
     sleep(0.5)
 
 
@@ -292,13 +293,20 @@ def get_test_data():
     test_data["temp"] = 11.5
     return test_data
 
-def debug_print(msg_tuple):
+
+def debug_print(*args):
     if debug:
-        print("[DEBUG]", msg_tuple)
+        print("[DEBUG]", fix(args))
 
-def error_print(msg_tuple):
-    print("[ERROR]", msg_tuple)
 
+def error_print(*args):
+    print("[ERROR]", fix(args))
+
+
+def fix(a):
+    m = ""
+    for i in a: m += (str(i) + " ")
+    return m
 
 '''
 RUNTIME START
@@ -322,7 +330,7 @@ weather_data = {}
 do_show = True
 is_rtc_set = False
 last_check = localtime()
-last_forecast = monotonic_ns()
+last_forecast = ticks_us()
 last_display = last_forecast
 
 # Display banner
@@ -335,11 +343,13 @@ while True:
         if not result:
             sleep(0.5)
             continue
+    else:
+        led.on()
 
     # Check the clock
-    ns_tick = monotonic_ns()
-    if (ns_tick - last_forecast > FORECAST_PERIOD_NS or do_show) and open_weather_call_count < 990:
-        # Get a forecast every FORECAST_PERIOD_NS nanoseconds
+    us_tick = ticks_us()
+    if (us_tick - last_forecast > FORECAST_PERIOD_US or do_show) and open_weather_call_count < 990:
+        # Get a forecast every FORECAST_PERIOD_US microseconds
         lat = secrets["lat"] if "lat" in secrets else 0
         lng = secrets["lng"] if "lng" in secrets else 0
         forecast = open_weather.request_forecast(lat, lng)
@@ -405,12 +415,12 @@ while True:
                 # A new day, so reset the call count
                 open_weather_call_count = 0
             last_check = now
-            last_forecast = ns_tick
+            last_forecast = us_tick
             do_show = True
 
-    if (ns_tick - last_display > DISPLAY_PERIOD_NS) or do_show:
-        # Update the display every DISPLAY_PERIOD_NS nanoseconds,
+    if (us_tick - last_display > DISPLAY_PERIOD_US) or do_show:
+        # Update the display every DISPLAY_PERIOD_US microseconds,
         # or on a new forecast
         display_weather(matrix, weather_data)
-        last_display = monotonic_ns()
+        last_display = ticks_us()
         do_show = False

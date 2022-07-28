@@ -129,3 +129,5 @@ dmypy.json
 .pyre/
 
 *.xcworkspace/xcuserdata/*.xcuserdatad
+secrets.py
+

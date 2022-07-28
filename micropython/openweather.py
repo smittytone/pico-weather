@@ -1,3 +1,5 @@
+import urequests as requests
+
 class OpenWeather:
     """
     This class allows you to make one of two possible calls to OpenWeather’s
