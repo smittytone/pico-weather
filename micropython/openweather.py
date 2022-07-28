@@ -12,7 +12,7 @@ class OpenWeather:
 
     MicroPython version for Raspberry Pi Pico W
 
-    Version:        2.1.0
+    Version:        2.0.0.m
     Author:         Tony Smith (@smittytone)
     License:        MIT
     Copyright:      2022
@@ -20,7 +20,7 @@ class OpenWeather:
 
     # *********** CONSTANTS **********
 
-    VERSION = const("2.1.0")
+    VERSION = const("2.0.0.m")
     FORECAST_URL = const("https://api.openweathermap.org/data/2.5/onecall")
 
     # *********Private Properties **********

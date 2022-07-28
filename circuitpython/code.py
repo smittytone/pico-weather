@@ -2,7 +2,7 @@
 PicoWeather
 CircuitPython version for Raspberry Pi Pico + Pimoroni PicoWireless
 
-Version:        2.0.0
+Version:        2.0.0.c
 Author:         Tony Smith (@smittytone)
 License:        MIT
 Copyright:      2022

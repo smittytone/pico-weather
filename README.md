@@ -1,4 +1,4 @@
-# Pico Weather 2
+# Pico Weather 2.0.0
 
 A Raspberry Pi Pico-based weather readout. There are two versions: one (Model A) using the Pico and the Pimoroni PicoWireless.
 
@@ -8,7 +8,12 @@ And a second (Model B) based on the Raspberry Pi Pico W.
 
 ## Versioning
 
-For this repo, I use semantic versioning — *major.minor.patch* — with a twist. Even *minor* values are reserved for Model A; Model B uses odd *minor* values. So if you build a Model B unit with code version 2.1.0 and I release 2.2.0, you can ignore it. The next version for you will by 2.1.x or 2.3.x.
+Where there are versions of code files that depend on a type of Python, this is indicated by a suffix to the version number:
+
+* 2.0.0.c — CircuitPython
+* 2.0.0.m — MicroPython
+
+If there is no suffix, the code file works with either of these Python varieties.
 
 ## Requirements
 
@@ -49,12 +54,12 @@ Solder the LED matrix to the backpack, and the backpack to the supplied male hea
 
 Now connect these pins using the DuPont wires:
 
-| Backpack pin | Pico Pin |
-| :-: | :-: |
-| 3V3 | 5 |
-| SDA | 6 |
-| SCL | 7 |
-| GND | 8 |
+| Backpack pin | Pico Pin | GPIO Pin |
+| :-: | :-: | :-: |
+| 3V3 | 5 | 3 |
+| SDA | 6 | 4 |
+| SCL | 7 | 5 |
+| GND | 8 | N/A |
 
 ![Use the DuPont wires to connect the display](./images/P1020217.JPG)
 
@@ -108,9 +113,9 @@ Do not save this file in your repo.
 
 ## Release Notes
 
-* 2.x.y *Unreleased*
-    * Add MicroPython version for Pico W, `2.1.0`.
-    * Bump the CircuitPython version for Pico + PicoWirelss to `2.0.0`.
+* 2.0.0 *Unreleased*
+    * Add MicroPython version for Pico W.
+    * Reorganise repo for the two supported Pythons.
 * 1.0.2 *27 January 2022*
     * Logging optimisation.
 * 1.0.1 *17 January 2022*
@@ -128,4 +133,4 @@ For convenience, this repository includes software from Adafruit, specifically:
 
 These libraries’ source code files are copyright © 2019 ladyada for Adafruit Industries and are issued under the terms of the [MIT Licence](./LICENSE.md).
 
-All other source code is copyright © 2021, 2022 Tony Smith and is also made available under the terms of the [MIT Licence](./LICENSE.md).
+All other source code is copyright © 2022 Tony Smith and is also made available under the terms of the [MIT Licence](./LICENSE.md).

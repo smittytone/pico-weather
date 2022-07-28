@@ -128,6 +128,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-*.xcworkspace/xcuserdata/*.xcuserdatad
 secrets.py
-
+*.xcworkspace/xcuserdata/*.xcuserdatad

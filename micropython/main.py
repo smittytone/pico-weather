@@ -2,7 +2,7 @@
 PicoWeather
 MicroPython version for Raspberry Pi Pico W
 
-Version:        2.1.0
+Version:        2.0.0.m
 Author:         Tony Smith (@smittytone)
 License:        MIT
 Copyright:      2022
