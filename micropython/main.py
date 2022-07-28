@@ -424,6 +424,6 @@ while True:
         display_weather(matrix, weather_data)
         now = localtime()
         time = "{:2d}:{:2d}:{:2d}".format(now[3], now[4], now[5])
-        debug_print("Re-display @:",time,us_tick,last_display)
+        debug_print("Re-display @",time)
         last_display = us_tick
         do_show = False
