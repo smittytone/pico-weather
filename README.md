@@ -8,6 +8,8 @@ And a second (Model B) based on the Raspberry Pi Pico W:
 
 ![A Raspberry Pi Pico W-based weather readout](./images/IMG_1032.JPG)
 
+**Note** The MicroPython release for the Pico W is currently considered “unstable”, so expect errors and issues!
+
 ## Versioning
 
 Where there are versions of code files that depend on a type of Python, this is indicated by a suffix to the version number:

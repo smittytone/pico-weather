@@ -422,5 +422,8 @@ while True:
         # Update the display every DISPLAY_PERIOD_US microseconds,
         # or on a new forecast
         display_weather(matrix, weather_data)
-        last_display = ticks_us()
+        last_display = us_tick
         do_show = False
+        now = localtime()
+        time = "{:2d}:{:2d}:{:2d}".format(now[3], now[4], now[5])
+        debug_print("Re-display @:",time)
