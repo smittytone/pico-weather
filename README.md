@@ -108,7 +108,7 @@ Do not save this file in your repo.
 
 ## Release Notes
 
-* 2.0.0 *Unreleased*
+* 2.0.0 *29 July 2022*
     * Add MicroPython version for Pico W.
     * Reorganise repo for the two supported Pythons.
 * 1.0.2 *27 January 2022*
