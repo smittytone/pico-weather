@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "container:micropython">
+   </FileRef>
+   <FileRef
+      location = "container:circuitpython">
+   </FileRef>
+   <FileRef
+      location = "container:LICENSE.md">
+   </FileRef>
+   <FileRef
+      location = "container:README.md">
+   </FileRef>
+</Workspace>
