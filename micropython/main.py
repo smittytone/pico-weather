@@ -222,7 +222,7 @@ def display_weather(display, display_data=None):
 
     # Display the forecast if we should display it
     display.clear()
-    display.scroll_text(scroll_text + "    ", 0.07)
+    display.scroll_text(scroll_text + "    ", 0.06)
     saved_data = display_data
 
     # Pause for half a second
