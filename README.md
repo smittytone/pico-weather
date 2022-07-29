@@ -10,15 +10,6 @@ And a second (Model B) based on the Raspberry Pi Pico W:
 
 **Note** The MicroPython release for the Pico W is currently considered “unstable”, so expect errors and issues!
 
-## Versioning
-
-Where there are versions of code files that depend on a type of Python, this is indicated by a suffix to the version number:
-
-* 2.0.0.c — CircuitPython
-* 2.0.0.m — MicroPython
-
-If there is no suffix, the code file works with either of these Python varieties.
-
 ## Requirements
 
 ### Hardware

@@ -8,9 +8,7 @@ class OpenWeather:
     NOTE this class does not parse the incoming data, which is highly complex.
         It is up to your application to extract the data you require.
 
-    CircuitPython version for Raspberry Pi Pico + Pimoroni PicoWireless
-
-    Version:        2.0.0.c
+    Version:        2.0.0
     Author:         Tony Smith (@smittytone)
     License:        MIT
     Copyright:      2022
@@ -18,8 +16,9 @@ class OpenWeather:
 
     # *********** CONSTANTS **********
 
-    VERSION = "2.0.0.c"
+    VERSION = "2.0.0"
     FORECAST_URL = "https://api.openweathermap.org/data/2.5/onecall"
+
 
     # *********Private Properties **********
     requests = None
@@ -28,6 +27,7 @@ class OpenWeather:
     lang = "en"
     excludes = None
     debug = False
+
 
     # *********** CONSTRUCTOR **********
 
@@ -43,16 +43,17 @@ class OpenWeather:
 
     # *********** PUBLIC METHODS **********
 
+    """
+    Make a request for future weather data.
+
+    Args:
+        longitude [float]   Longitude of location for which a forecast is required.
+        latitude [float]    Latitude of location for which a forecast is required.
+
+    Returns:
+        The weather data.
+    """
     def request_forecast(self, latitude=999.0, longitude=999.0):
-        """
-        Make a request for future weather data.
-
-        Args:
-            longitude [float]   Longitude of location for which a forecast is required.
-            latitude [float]    Latitude of location for which a forecast is required.
-
-        Returns:
-        """
         # Check the supplied co-ordinates
         if not self._check_coords(longitude, latitude, "request_forecast"):
             return {"error": "Co-ordinate error"}
@@ -66,17 +67,17 @@ class OpenWeather:
         return self._send_request(url)
 
 
+    """
+    Specify the preferred weather report's units.
+
+    Args:
+        units [string]  Country code indicating the type of units.
+                        Default: automatic, based on location.
+
+    Returns:
+        The instance (self)
+    """
     def set_unit(self, requested_units="standard"):
-        """
-        Specify the preferred weather report's units.
-
-        Args:
-            units [string]  Country code indicating the type of units.
-                            Default: automatic, based on location.
-
-        Returns:
-            The instance (self)
-        """
         unit_types = ["metric", "imperal", "standard"]
         requested_units = requested_units.lower()
         if not requested_units in unit_types:
@@ -89,17 +90,17 @@ class OpenWeather:
         return self
 
 
+    """
+    Specify the preferred weather report's language.
+
+    Args:
+        language [string]   Country code indicating the language.
+                            Default: English.
+
+    Returns:
+        The instance (self)
+        """
     def set_language(self, language="en"):
-        """
-        Specify the preferred weather report's language.
-
-        Args:
-            language [string]   Country code indicating the language.
-                                Default: English.
-
-        Returns:
-            The instance (self)
-        """
         lang_types = ["af", "al", "ar", "az", "bg", "ca", "cz", "da", "de", "el", "en", "eu", "fa",
                     "fi", "fr", "gl", "he", "hi", "hr", "hu", "id", "it", "ja", "kr", "la", "lt",
                     "mk", "no", "nl", "pl", "pt", "pt_br", "ro", "ru", "se", "sv", "sk", "sl", "sp", "es", "sr", "th", "tr", "ua", "uk", "vi", "zh_cn", "zh_tw", "zu"]
@@ -113,6 +114,16 @@ class OpenWeather:
                 print("[DEBUG] OpenWeather language set: " + self.lang)
             return self
 
+
+    """
+    Indicate items OpenWeather should not include in its response.
+
+    Args:
+        list [array]    List of items to exclude. Default: no exclusions.
+
+    Returns:
+        The instance (self)
+    """
     def exclude(self, list=[]):
         exclude_types = ["current", "minutely", "hourly", "daily", "alerts"]
         matches = []
@@ -134,6 +145,7 @@ class OpenWeather:
             print("[DEBUG] OpenWeather excludes set: " + self.excludes)
         return self
 
+
     # *********PRIVATE FUNCTIONS - DO NOT CALL **********
 
     """
@@ -148,16 +160,17 @@ class OpenWeather:
     def _send_request(self, request_uri):
         return self._process_response(self.requests.get(request_uri))
 
+
+    """
+    Process a response received from OpenWeather.
+
+    Args:
+        response [response] The HTTPS response.
+
+    Returns
+        Dictionary containing `data` or `err` keys.
+    """
     def _process_response(self, response):
-        """
-        Process a response received from OpenWeather.
-
-        Args:
-            response [response] The HTTPS response.
-
-        Returns
-            Dictionary containing `data` or `err` keys.
-        """
         err = ""
         data = ""
 
@@ -181,18 +194,18 @@ class OpenWeather:
             return {"data": data}
 
 
+    """
+    Check that valid co-ordinates have been supplied.
+
+    Args:
+        longitude [float]   Longitude of location for which a forecast is required.
+        latitude [float]    Latitude of location for which a forecast is required.
+        caller [string]     The name of the calling function, for error reporting.
+
+    Returns:
+        Whether the supplied co-ordinates are valid (True) or not (False).
+    """
     def _check_coords(self, longitude=999.0, latitude=999.0, caller="function"):
-        """
-        Check that valid co-ordinates have been supplied.
-
-        Args:
-            longitude [float]   Longitude of location for which a forecast is required.
-            latitude [float]    Latitude of location for which a forecast is required.
-            caller [string]     The name of the calling function, for error reporting.
-
-        Returns:
-            Whether the supplied co-ordinates are valid (True) or not (False).
-        """
         try:
             longitude = float(longitude)
         except:
@@ -219,16 +232,16 @@ class OpenWeather:
         return True
 
 
+    """
+    Add URL-encoded options to the request URL. Used when assembling HTTPS requests.
+
+    Args:
+        baseurl [string]    Optional base URL.
+
+    Returns
+        The full URL with added options.
+    """
     def _add_options(self, baseurl=""):
-        """
-        Add URL-encoded options to the request URL. Used when assembling HTTPS requests.
-
-        Args:
-            baseurl [string]    Optional base URL.
-
-        Returns
-            The full URL with added options.
-        """
         opts = "&units=" + self.units
         if self.lang: opts += "&lang=" + self.lang
         if self.excludes: opts += "&exclude=" + self.excludes

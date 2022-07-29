@@ -14,6 +14,7 @@ IMPORTS
 import network
 import usocket as socket
 import ustruct as struct
+import urequests as requests
 from machine import Pin, I2C, RTC
 from time import ticks_us, ticks_diff, sleep, localtime
 from micropython import const
@@ -45,7 +46,7 @@ CONSTANTS
 '''
 I2C_SDA = Pin(4)
 I2C_SCL = Pin(5)
-DISPLAY_PERIOD_US = 20 * 1000000
+DISPLAY_PERIOD_US = 30 * 1000000
 FORECAST_PERIOD_US = 15 * 60 * 1000000
 CONNECT_TIMEOUT_S = 20
 
@@ -324,7 +325,7 @@ wlan.active(True)
 
 # Set up Open Weather
 open_weather_call_count = 0
-open_weather = OpenWeather(secrets["apikey"], True)
+open_weather = OpenWeather(requests, secrets["apikey"], True)
 weather_data = {}
 # weather_data = get_test_data()
 do_show = True
