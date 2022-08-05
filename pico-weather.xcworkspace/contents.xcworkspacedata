@@ -2,10 +2,10 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "absolute:micropython">
+      location = "group:circuitpython">
    </FileRef>
    <FileRef
-      location = "absolute:circuitpython">
+      location = "group:micropython">
    </FileRef>
    <FileRef
       location = "container:LICENSE.md">
