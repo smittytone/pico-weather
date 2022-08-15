@@ -1,4 +1,4 @@
-# Pico Weather 2.0.0
+# Pico Weather 2.0.1
 
 A Raspberry Pi Pico-based weather readout. There are two versions: one (Model A) using the Pico and the Pimoroni PicoWireless:
 
@@ -108,6 +108,8 @@ Do not save this file in your repo.
 
 ## Release Notes
 
+* 2.0.1 *15 August 2022*
+    * Correct argument checking in `OpenWeather.exclude()`.
 * 2.0.0 *29 July 2022*
     * Add MicroPython version for Pico W.
     * Reorganise repo for the two supported Pythons.
