@@ -2,7 +2,7 @@
 PicoWeather
 MicroPython version for Raspberry Pi Pico W
 
-Version:        2.0.0.m
+Version:        2.0.1.m
 Author:         Tony Smith (@smittytone)
 License:        MIT
 Copyright:      2022
@@ -49,6 +49,7 @@ I2C_SCL = Pin(5)
 DISPLAY_PERIOD_US = 30 * 1000000
 FORECAST_PERIOD_US = 15 * 60 * 1000000
 CONNECT_TIMEOUT_S = 20
+VERSION = "2.0.1"
 
 
 '''
@@ -280,7 +281,7 @@ Args:
 '''
 def show_startup(display):
     display.clear().draw()
-    display.scroll_text("    PicoWeather 2.1.0 by @smittytone    ", 0.05)
+    display.scroll_text("    PicoWeather " + VERSION + " by @smittytone    ", 0.05)
     sleep(0.5)
 
 

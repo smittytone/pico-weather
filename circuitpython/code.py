@@ -2,7 +2,7 @@
 PicoWeather
 CircuitPython version for Raspberry Pi Pico + Pimoroni PicoWireless
 
-Version:        2.0.0.c
+Version:        2.0.1.c
 Author:         Tony Smith (@smittytone)
 License:        MIT
 Copyright:      2022
@@ -53,9 +53,10 @@ I2C_SDA = board.GP4
 I2C_SCL = board.GP5
 DISPLAY_PERIOD_NS = 20 * 1000000000
 FORECAST_PERIOD_NS = 15 * 60 * 1000000000
-
+VERSION = "2.0.1"
 MSG_TYPE_ERROR = 0
 MSG_TYPE_DEBUG = 1
+
 
 '''
 GLOBALS
@@ -248,7 +249,7 @@ Args:
 '''
 def show_startup(display):
     display.clear().draw()
-    display.scroll_text("    PicoWeather 2.0.0 by @smittytone    ", 0.05)
+    display.scroll_text("    PicoWeather " + VERSION + " by @smittytone    ", 0.05)
     sleep(0.5)
 
 
