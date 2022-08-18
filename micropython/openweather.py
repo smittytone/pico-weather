@@ -21,7 +21,7 @@ class OpenWeather:
 
     # *********** CONSTANTS **********
 
-    VERSION = "2.0.1"
+    VERSION = "2.0.2"
     FORECAST_URL = "https://api.openweathermap.org/data/2.5/onecall"
 
 
@@ -96,7 +96,7 @@ class OpenWeather:
             The instance (self)
         '''
 
-        unit_types = ["metric", "imperal", "standard"]
+        unit_types = ["metric", "imperial", "standard"]
         requested_units = requested_units.lower()
         if requested_units not in unit_types:
             err = "OpenWeather.set_units() incorrect units option selected ("
